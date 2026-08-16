@@ -7,19 +7,14 @@ import 'package:budget/pages/addObjectivePage.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/editAssociatedTitlesPage.dart';
 import 'package:budget/pages/editWalletsPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/settingsPage.dart';
-import 'package:budget/pages/sharedBudgetSettings.dart';
 import 'package:budget/pages/transactionsListPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/navBarIconsData.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/upcomingTransactionsFunctions.dart';
 import 'package:budget/struct/uploadAttachment.dart';
-import 'package:budget/widgets/accountAndBackup.dart';
-import 'package:budget/widgets/navigationFramework.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/categoryIcon.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
@@ -591,13 +586,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
 
       // recentlyAddedTransactionID.value =
 
-      if (widget.transaction == null &&
-          appStateSettings["purchaseID"] == null) {
-        updateSettings("premiumPopupAddTransactionCount",
-            (appStateSettings["premiumPopupAddTransactionCount"] ?? 0) + 1,
-            updateGlobalState: false);
-      }
-
       return true;
     } catch (e) {
       if (e.toString() == "category-no-longer-exists") {
@@ -626,9 +614,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
     bool? createdAnotherFutureTransaction = widget.transaction != null
         ? widget.transaction!.createdAnotherFutureTransaction
         : null;
-    bool paid = widget.transaction != null
-        ? widget.transaction!.paid
-        : selectedType == null;
     bool skipPaid = widget.transaction != null
         ? widget.transaction!.skipPaid
         : selectedType == null;
@@ -637,15 +622,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         widget.transaction != null &&
         widget.transaction!.type != selectedType) {
       createdAnotherFutureTransaction = false;
-
-      if ([TransactionSpecialType.credit, TransactionSpecialType.debt]
-          .contains(selectedType)) {
-        paid = true;
-        skipPaid = false;
-      } else {
-        paid = false;
-        skipPaid = false;
-      }
+      skipPaid = false;
     }
 
     Transaction createdTransaction = Transaction(
@@ -780,7 +757,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
           openTransferBalancePopup();
           return;
         }
-        await premiumPopupAddTransaction(context);
         if (widget.startInitialAddTransactionSequence == false) return;
         if (appStateSettings["askForTransactionTitle"]) {
           openBottomSheet(
@@ -1514,9 +1490,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                     },
                     getSelected: (String item) {
                       return selectedPayer == item;
-                    },
-                    onLongPress: (String item) {
-                      memberPopup(context, item);
                     },
                   ),
                 ),
@@ -4122,103 +4095,6 @@ class ReorderCategoriesPopup extends StatelessWidget {
   }
 }
 
-String? getFileIdFromUrl(String url) {
-  RegExp regExp = RegExp(r"/d/([a-zA-Z0-9_-]+)");
-  Match? match = regExp.firstMatch(url);
-  if (match != null && match.groupCount >= 1) {
-    return match.group(1)!;
-  } else {
-    return null;
-  }
-}
-
-Future<List<int>?> getGoogleDriveFileImageData(String url) async {
-  dynamic result = await openLoadingPopupTryCatch(
-    () async {
-      String? fileId = getFileIdFromUrl(url);
-      if (fileId == null) throw ("No file id found!");
-
-      if (googleUser == null) {
-        await signInGoogle(drivePermissionsAttachments: true);
-      }
-
-      final authHeaders = await googleUser!.authHeaders;
-      final authenticateClient = GoogleAuthClient(authHeaders);
-      drive.DriveApi driveApi = drive.DriveApi(authenticateClient);
-
-      List<int> dataStore = [];
-
-      drive.File fileMetadata =
-          await driveApi.files.get(fileId, $fields: 'size') as drive.File;
-      int totalBytes = int.parse(fileMetadata.size ?? "0");
-
-      dynamic response = await driveApi.files
-          .get(fileId, downloadOptions: drive.DownloadOptions.fullMedia);
-
-      num receivedBytes = 0;
-
-      loadingProgressKey.currentState?.setProgressPercentage(0);
-
-      await for (var data in response.stream) {
-        dataStore.insertAll(dataStore.length, data);
-        receivedBytes += data.length;
-        double progress = receivedBytes / totalBytes;
-        loadingProgressKey.currentState?.setProgressPercentage(progress);
-      }
-      loadingProgressKey.currentState?.setProgressPercentage(0);
-      return dataStore;
-    },
-    onError: (error) {
-      loadingProgressKey.currentState?.setProgressPercentage(0);
-      print(error);
-    },
-  );
-  if (result is List<int>) return result;
-  return null;
-}
-
-class RenderImageData extends StatelessWidget {
-  const RenderImageData(
-      {required this.imageData, required this.openLinkOnError, super.key});
-  final List<int>? imageData;
-  final VoidCallback openLinkOnError;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: () {
-        openLinkOnError();
-      },
-      child: Image.memory(
-        Uint8List.fromList(imageData ?? []),
-        errorBuilder: (context, error, stackTrace) => Center(
-          child: Tappable(
-            onTap: openLinkOnError,
-            color: Colors.transparent,
-            borderRadius: 15,
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: 20, vertical: 25),
-              child: Column(
-                children: [
-                  TextFont(
-                    fontSize: 18,
-                    text: "failed-to-preview-image".tr(),
-                    textAlign: TextAlign.center,
-                    maxLines: 4,
-                  ),
-                  SizedBox(height: 15),
-                  LowKeyButton(onTap: openLinkOnError, text: "open-link".tr()),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class LinkInNotes extends StatelessWidget {
   const LinkInNotes({
     required this.link,
@@ -4534,52 +4410,6 @@ class _TransactionNotesTextInputState extends State<TransactionNotesTextInput> {
                           },
                           extraWidget: Row(
                             children: [
-                              if (link.contains("drive.google.com"))
-                                Padding(
-                                  padding: const EdgeInsetsDirectional.only(
-                                      end: 3, start: 5),
-                                  child: IconButtonScaled(
-                                    iconData: appStateSettings["outlinedIcons"]
-                                        ? Icons.photo_outlined
-                                        : Icons.photo_rounded,
-                                    iconSize: 16,
-                                    scale: 1.6,
-                                    onTap: () async {
-                                      List<int>? result =
-                                          await getGoogleDriveFileImageData(
-                                              link);
-                                      if (result == null) {
-                                        openUrl(link);
-                                      } else {
-                                        openBottomSheet(
-                                          context,
-                                          PopupFramework(
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadiusDirectional
-                                                      .circular(getPlatform() ==
-                                                              PlatformOS.isIOS
-                                                          ? 10
-                                                          : 15),
-                                              child: RenderImageData(
-                                                imageData: result,
-                                                openLinkOnError: () {
-                                                  openUrl(link);
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                        // Update the size of the bottom sheet
-                                        Future.delayed(
-                                            Duration(milliseconds: 300), () {
-                                          bottomSheetControllerGlobal
-                                              .snapToExtent(0);
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
                               Padding(
                                 padding: const EdgeInsetsDirectional.only(
                                     end: 11, start: 5),

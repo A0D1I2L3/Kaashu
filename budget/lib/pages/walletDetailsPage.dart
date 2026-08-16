@@ -7,7 +7,6 @@ import 'package:budget/pages/creditDebtTransactionsPage.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/homePage/homePageNetWorth.dart';
 import 'package:budget/pages/pastBudgetsPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/pages/transactionsSearchPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
@@ -156,7 +155,6 @@ class WalletDetailsPageState extends State<WalletDetailsPage>
       searchFilters = widget.initialSearchFilters;
       selectedDateTimeRange = widget.initialSearchFilters?.dateTimeRange;
     } else if (widget.wallet == null) {
-      allSpendingHistoryDismissedPremium = false;
       searchFilters?.loadFilterString(
         appStateSettings["allSpendingSetFiltersString"],
         skipDateTimeRange: true,
@@ -2167,8 +2165,6 @@ class WalletDetailsLineGraph extends StatelessWidget {
   }
 }
 
-bool allSpendingHistoryDismissedPremium = false;
-
 class AllSpendingPastSpendingGraph extends StatefulWidget {
   const AllSpendingPastSpendingGraph({
     required this.searchFilters,
@@ -2583,70 +2579,64 @@ class _AllSpendingPastSpendingGraphState
             children: [
               Container(
                 color: Theme.of(context).colorScheme.background,
-                child: FadeOutAndLockFeature(
-                  hasInitiallyDismissed: allSpendingHistoryDismissedPremium,
-                  actionAfter: () {
-                    allSpendingHistoryDismissedPremium = true;
-                  },
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                            vertical: 7, horizontal: 0),
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.only(end: 5),
-                          child: ClipRRect(
-                            child: BudgetHistoryLineGraph(
-                              forceMinYIfPositive:
-                                  widget.appStateSettingsNetAllSpendingTotal
-                                      ? null
-                                      : 0,
-                              showDateOnHover: true,
-                              onTouchedIndex: (index) {},
-                              color: dynamicPastel(
-                                context,
-                                Theme.of(context).colorScheme.primary,
-                                amountLight: 0.4,
-                                amountDark: 0.2,
-                              ),
-                              dateRanges: dateTimeRanges,
-                              lineColors: allSpots.length > 1
-                                  ? [
-                                      getColor(context, "expenseAmount"),
-                                      getColor(context, "incomeAmount"),
-                                    ]
-                                  : null,
-                              spots: allSpots,
-                              horizontalLineAt: null,
-                              budget: getCustomCycleTempBudget(""),
-                              extraCategorySpots: {},
-                              categoriesMapped: {},
-                              loadAllEvenIfZero: amountLoadedPressedOnce,
-                              setNoPastRegionsAreZero: (bool value) {
-                                amountLoadedPressedOnce = true;
-                              },
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                          vertical: 7, horizontal: 0),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(end: 5),
+                        child: ClipRRect(
+                          child: BudgetHistoryLineGraph(
+                            forceMinYIfPositive:
+                                widget.appStateSettingsNetAllSpendingTotal
+                                    ? null
+                                    : 0,
+                            showDateOnHover: true,
+                            onTouchedIndex: (index) {},
+                            color: dynamicPastel(
+                              context,
+                              Theme.of(context).colorScheme.primary,
+                              amountLight: 0.4,
+                              amountDark: 0.2,
                             ),
+                            dateRanges: dateTimeRanges,
+                            lineColors: allSpots.length > 1
+                                ? [
+                                    getColor(context, "expenseAmount"),
+                                    getColor(context, "incomeAmount"),
+                                  ]
+                                : null,
+                            spots: allSpots,
+                            horizontalLineAt: null,
+                            budget: getCustomCycleTempBudget(""),
+                            extraCategorySpots: {},
+                            categoriesMapped: {},
+                            loadAllEvenIfZero: amountLoadedPressedOnce,
+                            setNoPastRegionsAreZero: (bool value) {
+                              amountLoadedPressedOnce = true;
+                            },
                           ),
                         ),
                       ),
-                      LoadMorePeriodsButton(
-                        onPressed: () {
-                          if (amountLoadedPressedOnce == false) {
-                            setState(() {
-                              amountLoadedPressedOnce = true;
-                            });
-                          } else {
-                            int amountMoreToLoad =
-                                getIsFullScreen(context) == false ? 3 : 5;
-                            loadLines(amountLoaded + amountMoreToLoad);
-                            setState(() {
-                              amountLoaded = amountLoaded + amountMoreToLoad;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+                    ),
+                    LoadMorePeriodsButton(
+                      onPressed: () {
+                        if (amountLoadedPressedOnce == false) {
+                          setState(() {
+                            amountLoadedPressedOnce = true;
+                          });
+                        } else {
+                          int amountMoreToLoad =
+                              getIsFullScreen(context) == false ? 3 : 5;
+                          loadLines(amountLoaded + amountMoreToLoad);
+                          setState(() {
+                            amountLoaded = amountLoaded + amountMoreToLoad;
+                          });
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
               Transform.translate(

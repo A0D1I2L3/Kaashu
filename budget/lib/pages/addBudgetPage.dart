@@ -4,23 +4,16 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/editBudgetLimitsPage.dart';
 import 'package:budget/pages/editBudgetPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/settingsPage.dart';
-import 'package:budget/pages/sharedBudgetSettings.dart';
 import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/struct/shareBudget.dart';
-import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
-import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/incomeExpenseTabSelector.dart';
 import 'package:budget/widgets/navigationFramework.dart';
-import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
-import 'package:budget/widgets/openSnackbar.dart';
 import 'package:budget/widgets/selectChips.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:budget/widgets/radioItems.dart';
@@ -118,13 +111,11 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
       widget.budget?.colour == null ? null : HexColor(widget.budget?.colour);
   String selectedRecurrence = "Monthly";
   bool selectedPin = true;
-  bool selectedShared = false;
   bool selectedIncome = false;
   bool selectedAddedTransactionsOnly = false;
   List<BudgetTransactionFilters> selectedBudgetTransactionFilters = [
     BudgetTransactionFilters.defaultBudgetTransactionFilters
   ];
-  List<String> allMembersOfAllBudgets = [];
   List<String>? selectedMemberTransactionFilters;
   FocusNode _titleFocusNode = FocusNode();
   bool increaseBudgetWarningShown = false;
@@ -146,14 +137,6 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
     );
   }
 
-  setSelectedShared(bool shared) {
-    setState(() {
-      selectedShared = shared;
-      if (shared == true) selectedAddedTransactionsOnly = true;
-      if (shared == false) selectedAddedTransactionsOnly = true;
-    });
-  }
-
   setSelectedIncome(bool income) {
     setState(() {
       selectedIncome = income;
@@ -169,9 +152,6 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
   setAddedTransactionsOnly(bool addedOnly) {
     setState(() {
       selectedAddedTransactionsOnly = addedOnly;
-      if (selectedShared && !addedOnly) {
-        selectedShared = false;
-      }
       if (addedOnly) {
         selectedCategoryPks = null;
         selectedCategoryPksExclude = null;
@@ -233,58 +213,11 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
     loadingIndeterminateKey.currentState?.setVisibility(true);
     Budget createdBudget = await createBudget();
     print("Added budget");
-    int result = await database.createOrUpdateBudget(
+    await database.createOrUpdateBudget(
         insert: widget.budget == null, createdBudget);
-    if (selectedShared == true &&
-        widget.budget == null &&
-        appStateSettings["sharedBudgets"] == true) {
-      openLoadingPopup(context);
-      bool result2 = await shareBudget(createdBudget, context);
-      popRoute(context);
-      if (result2 == false) {
-        Future.delayed(Duration.zero, () {
-          openPopup(
-            context,
-            title: "No Connection",
-            icon: appStateSettings["outlinedIcons"]
-                ? Icons.signal_wifi_connected_no_internet_4_outlined
-                : Icons.signal_wifi_connected_no_internet_4_rounded,
-            description:
-                "You can only update the details of a shared budget online.",
-            onSubmit: () {
-              popRoute(context);
-            },
-            onSubmitLabel: "ok".tr(),
-          );
-        });
-        loadingIndeterminateKey.currentState?.setVisibility(false);
-        return;
-      }
-    }
     loadingIndeterminateKey.currentState?.setVisibility(false);
-    if (result == -1 && appStateSettings["sharedBudgets"] == true) {
-      openPopup(
-        context,
-        title: "No Connection",
-        icon: appStateSettings["outlinedIcons"]
-            ? Icons.signal_wifi_connected_no_internet_4_outlined
-            : Icons.signal_wifi_connected_no_internet_4_rounded,
-        description:
-            "You can only update the details of a shared category online.",
-        onCancel: () {
-          popRoute(context);
-          popRoute(context);
-        },
-        onSubmit: () {
-          popRoute(context);
-        },
-        onSubmitLabel: "ok".tr(),
-        onCancelLabel: "Exit Without Saving",
-      );
-    } else {
-      savingHapticFeedback();
-      popRoute(context);
-    }
+    savingHapticFeedback();
+    popRoute(context);
   }
 
   Future<Budget> createBudget() async {
@@ -362,9 +295,8 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
     super.initState();
     Future.delayed(Duration.zero, () async {
       if (widget.budget == null) {
-        bool result = await premiumPopupBudgets(context);
-        if (result == true && widget.isAddedOnlyBudget != true) {
-          dynamic result = await openBottomSheet(
+        if (widget.isAddedOnlyBudget != true) {
+          await openBottomSheet(
             context,
             fullSnap: false,
             SelectBudgetTypePopup(setBudgetType: setSelectedBudgetType),
@@ -381,7 +313,7 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
           //     ),
           //   );
           // }
-          dynamic result2 = await openBottomSheet(
+          await openBottomSheet(
             context,
             fullSnap: false,
             SelectBudgetIncomeTypePopup(setBudgetIncome: setSelectedIncome),
@@ -389,10 +321,8 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
         }
       }
 
-      allMembersOfAllBudgets = await database.getAllMembersOfBudgets();
       if (widget.isAddedOnlyBudget) {
         setAddedTransactionsOnly(true);
-        setSelectedShared(false);
       }
       setState(() {});
     });
@@ -454,18 +384,9 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
 
   setSelectedBudgetType(String item) {
     if (item == "All Transactions") {
-      setSelectedShared(false);
       setAddedTransactionsOnly(false);
     } else if (item == "Added Only") {
       setAddedTransactionsOnly(true);
-      setSelectedShared(false);
-    } else if (item == "Shared Group Budget") {
-      if (kDebugMode) {
-        setAddedTransactionsOnly(true);
-        setSelectedShared(true);
-      } else {
-        openSnackbar(SnackbarMessage(title: "Only allowed in debug mode"));
-      }
     }
   }
 
@@ -926,14 +847,9 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                         items: <String>[
                           "Added Only",
                           "All Transactions",
-                          ...(appStateSettings["sharedBudgets"]
-                              ? ["Shared Group Budget"]
-                              : [])
                         ],
                         getLabel: (String item) {
-                          if (item == "Shared Group Budget")
-                            return item + " (Unsupported)";
-                          else if (item == "All Transactions")
+                          if (item == "All Transactions")
                             return "all-transactions".tr();
                           else if (item == "Added Only")
                             return "added-only".tr();
@@ -943,16 +859,10 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                           setSelectedBudgetType(item);
                         },
                         getSelected: (String item) {
-                          if (selectedShared == true &&
-                              selectedAddedTransactionsOnly == true &&
-                              item == "Shared Group Budget") {
-                            return true;
-                          } else if (selectedShared == false &&
-                              selectedAddedTransactionsOnly == true &&
+                          if (selectedAddedTransactionsOnly == true &&
                               item == "Added Only") {
                             return true;
-                          } else if (selectedShared == false &&
-                              selectedAddedTransactionsOnly == false &&
+                          } else if (selectedAddedTransactionsOnly == false &&
                               item == "All Transactions") {
                             return true;
                           }
@@ -965,19 +875,17 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                 ),
           SliverStickyLabelDivider(
             info: "transactions-to-include".tr(),
-            visible:
-                !(selectedShared == true || selectedAddedTransactionsOnly) &&
-                    ((widget.budget != null &&
-                            widget.budget!.sharedKey == null &&
-                            widget.budget!.addedTransactionsOnly == false) ||
-                        widget.budget == null),
+            visible: !selectedAddedTransactionsOnly &&
+                ((widget.budget != null &&
+                        widget.budget!.sharedKey == null &&
+                        widget.budget!.addedTransactionsOnly == false) ||
+                    widget.budget == null),
             sliver: SliverToBoxAdapter(
               child: FutureBuilder<TransactionCategory?>(
                   future: database.getCategory("0").$2,
                   builder: (context, snapshot) {
                     return AnimatedExpanded(
-                      expand: !(selectedShared == true ||
-                          selectedAddedTransactionsOnly),
+                      expand: !selectedAddedTransactionsOnly,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1007,12 +915,6 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                               BudgetTransactionFilters.includeDebtAndCredit,
                               BudgetTransactionFilters.addedToOtherBudget,
                               BudgetTransactionFilters.addedToObjective,
-                              ...(appStateSettings["sharedBudgets"]
-                                  ? [
-                                      BudgetTransactionFilters
-                                          .sharedToOtherBudget
-                                    ]
-                                  : []),
                               if (snapshot.hasData)
                                 BudgetTransactionFilters
                                     .includeBalanceCorrection,
@@ -1037,20 +939,15 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                                               ? "added-to-goal".tr()
                                               : item ==
                                                       BudgetTransactionFilters
-                                                          .sharedToOtherBudget
-                                                  ? "shared-to-other-budgets"
+                                                          .includeDebtAndCredit
+                                                  ? "include-debt-and-credit"
                                                       .tr()
                                                   : item ==
                                                           BudgetTransactionFilters
-                                                              .includeDebtAndCredit
-                                                      ? "include-debt-and-credit"
+                                                              .includeBalanceCorrection
+                                                      ? "balance-correction"
                                                           .tr()
-                                                      : item ==
-                                                              BudgetTransactionFilters
-                                                                  .includeBalanceCorrection
-                                                          ? "balance-correction"
-                                                              .tr()
-                                                          : "";
+                                                      : "";
                             },
                             onSelected: (dynamic item) {
                               if (item ==
@@ -1093,55 +990,6 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                                   .contains(item);
                             },
                           ),
-                          AnimatedExpanded(
-                            expand: appStateSettings["sharedBudgets"] == true &&
-                                (selectedBudgetTransactionFilters.contains(
-                                    BudgetTransactionFilters
-                                        .sharedToOtherBudget)),
-                            child: SelectChips(
-                              items: ["All", ...allMembersOfAllBudgets],
-                              getLabel: (String item) {
-                                return getMemberNickname(item);
-                              },
-                              onSelected: (String item) {
-                                if (item == "All" &&
-                                    selectedMemberTransactionFilters == null) {
-                                  selectedMemberTransactionFilters = [];
-                                  setState(() {});
-                                  determineBottomButton();
-                                  return;
-                                } else if (item == "All" &&
-                                    selectedMemberTransactionFilters != null) {
-                                  selectedMemberTransactionFilters = null;
-                                  setState(() {});
-                                  determineBottomButton();
-                                  return;
-                                }
-                                if (selectedMemberTransactionFilters == null) {
-                                  selectedMemberTransactionFilters = [];
-                                }
-                                if (selectedMemberTransactionFilters!
-                                    .contains(item)) {
-                                  selectedMemberTransactionFilters!
-                                      .remove(item);
-                                } else {
-                                  selectedMemberTransactionFilters!.add(item);
-                                }
-                                setState(() {});
-                                determineBottomButton();
-                              },
-                              getSelected: (String item) {
-                                if (item == "All" &&
-                                    selectedMemberTransactionFilters == null)
-                                  return true;
-                                if (item != "All" &&
-                                    selectedMemberTransactionFilters == null)
-                                  return true;
-                                return selectedMemberTransactionFilters!
-                                    .contains(item);
-                              },
-                            ),
-                          ),
                           SizedBox(height: 10),
                         ],
                       ),
@@ -1171,16 +1019,14 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
             ),
           SliverStickyLabelDivider(
             info: "select-accounts".tr(),
-            visible:
-                !(selectedShared == true || selectedAddedTransactionsOnly) &&
-                    ((widget.budget != null &&
-                            widget.budget!.sharedKey == null &&
-                            widget.budget!.addedTransactionsOnly == false) ||
-                        widget.budget == null),
+            visible: !selectedAddedTransactionsOnly &&
+                ((widget.budget != null &&
+                        widget.budget!.sharedKey == null &&
+                        widget.budget!.addedTransactionsOnly == false) ||
+                    widget.budget == null),
             sliver: SliverToBoxAdapter(
                 child: WalletChipSelector(
-              expand:
-                  !(selectedShared == true || selectedAddedTransactionsOnly),
+              expand: !selectedAddedTransactionsOnly,
               onSelected: (selected) {
                 selectedWalletFks = selected;
                 setState(() {});
@@ -1192,12 +1038,11 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
           SliverStickyLabelDivider(
             info: "select-categories".tr(),
             extraInfo: getSelectedCategoriesText(selectedCategoryPks),
-            visible:
-                !(selectedShared == true || selectedAddedTransactionsOnly) &&
-                    ((widget.budget != null &&
-                            widget.budget!.sharedKey == null &&
-                            widget.budget!.addedTransactionsOnly == false) ||
-                        widget.budget == null),
+            visible: !selectedAddedTransactionsOnly &&
+                ((widget.budget != null &&
+                        widget.budget!.sharedKey == null &&
+                        widget.budget!.addedTransactionsOnly == false) ||
+                    widget.budget == null),
             sliver: SliverToBoxAdapter(
               child: AnimatedOpacity(
                 duration: Duration(milliseconds: 500),
@@ -1208,8 +1053,7 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                 child: Padding(
                   padding: const EdgeInsetsDirectional.only(bottom: 5),
                   child: AnimatedExpanded(
-                    expand: !(selectedShared == true ||
-                        selectedAddedTransactionsOnly),
+                    expand: !selectedAddedTransactionsOnly,
                     child: SelectCategory(
                       horizontalList: true,
                       selectedCategories: selectedCategoryPks,
@@ -1229,12 +1073,11 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
             info: "select-exclude-categories".tr(),
             extraInfo: getSelectedCategoriesText(selectedCategoryPksExclude,
                 defaultText: "no-categories".tr()),
-            visible:
-                !(selectedShared == true || selectedAddedTransactionsOnly) &&
-                    ((widget.budget != null &&
-                            widget.budget!.sharedKey == null &&
-                            widget.budget!.addedTransactionsOnly == false) ||
-                        widget.budget == null),
+            visible: !selectedAddedTransactionsOnly &&
+                ((widget.budget != null &&
+                        widget.budget!.sharedKey == null &&
+                        widget.budget!.addedTransactionsOnly == false) ||
+                    widget.budget == null),
             sliver: SliverToBoxAdapter(
               child: AnimatedOpacity(
                 duration: Duration(milliseconds: 500),
@@ -1245,8 +1088,7 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
                 child: Padding(
                   padding: const EdgeInsetsDirectional.only(bottom: 5),
                   child: AnimatedExpanded(
-                    expand: !(selectedShared == true ||
-                        selectedAddedTransactionsOnly),
+                    expand: !selectedAddedTransactionsOnly,
                     child: SelectCategory(
                       horizontalList: true,
                       selectedCategories: selectedCategoryPksExclude,
@@ -1265,11 +1107,6 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
           ),
         ],
         listWidgets: [
-          widget.budget != null && widget.budget!.sharedKey != null
-              ? SharedBudgetSettings(
-                  budget: widget.budget!,
-                )
-              : SizedBox.shrink(),
           SizedBox(height: 13),
           Container(height: 70),
         ],

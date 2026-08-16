@@ -6,7 +6,6 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/editBudgetLimitsPage.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/pastBudgetsPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/pages/walletDetailsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
@@ -108,32 +107,19 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
   late int dateForRangeIndex = widget.dateForRangeIndex;
   late DateTime dateForRange =
       widget.dateForRange == null ? DateTime.now() : widget.dateForRange!;
-  bool budgetHistoryDismissedPremium = false;
   bool get isPastBudget => dateForRangeIndex != 0;
   bool get isPastBudgetButCurrentPeriod => dateForRangeIndex == 0;
-
-  @override
-  void initState() {
-    Future.delayed(Duration.zero, () {
-      if (isPastBudget == true) premiumPopupPastBudgets(context);
-    });
-    super.initState();
-  }
 
   void changeSelectedDateRange(int delta) async {
     int index = (dateForRangeIndex) - delta;
     if (index >= 0) {
-      if (budgetHistoryDismissedPremium == false)
-        budgetHistoryDismissedPremium = await premiumPopupPastBudgets(context);
-      if (budgetHistoryDismissedPremium) {
-        setState(() {
-          dateForRangeIndex = index;
-          dateForRange = getDatePastToDetermineBudgetDate(
-            index,
-            widget.budget,
-          );
-        });
-      }
+      setState(() {
+        dateForRangeIndex = index;
+        dateForRange = getDatePastToDetermineBudgetDate(
+          index,
+          widget.budget,
+        );
+      });
     }
   }
 
