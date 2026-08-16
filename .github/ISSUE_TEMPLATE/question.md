@@ -12,4 +12,4 @@ assignees: ''
 
 NOTE TO THE SUBMITTER
 **Please check past issues to ensure you are not duplicating questions. Duplicates will not be addressed again.**
-Feel free to email me at dapperappdeveloper@gmail.com and I'll be happy to help you!
+Feel free to open a discussion at https://github.com/A0D1I2L3/Finbud/issues
