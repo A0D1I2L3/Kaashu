@@ -61,19 +61,26 @@ UPITransaction? parseUPITransaction(String ocrText) {
 /// requirement. Note: a leading misread digit (₹98 -> "398") is deliberately
 /// NOT stripped, since a genuine "398" is indistinguishable from it.
 final RegExp _amountWithSymbol = RegExp(
-  r'(?:[₹%©€$XR]|Rs\.?|INR\.?)\s*([\d][\d,]*(?:\.\d{1,2})?)',
+  r'(?:[₹%©€$XR]|Rs\.?|INR\.?)\s*([\d][\d,]*(?:\.\d{1,2})?)(?!\w)',
   caseSensitive: false,
 );
 
 final RegExp _amountAfterLabel = RegExp(
-  r'(?:Amount|Amount Paid|Total|Transaction Amount)[\s:\-—]*([\d][\d,]*(?:\.\d{1,2})?)',
+  r'(?:Amount|Amount Paid|Total|Transaction Amount)[\s:\-—]*([\d][\d,]*(?:\.\d{1,2})?)(?!\w)',
   caseSensitive: false,
 );
 
-/// A standalone line that is just a number (optionally with a trailing ₹
-/// misread like "398 ©"). Ref numbers / UTR / txn IDs are too long to match.
+// A standalone line that is essentially just a number, tolerating a small
+// amount of stray noise at the edges (a misread icon/punctuation mark next
+// to the amount, extra whitespace from ML Kit's line grouping, etc). This is
+// deliberately more permissive than requiring an exact line match, since
+// small amounts (no comma grouping, ₹ symbol sometimes dropped entirely by
+// OCR) rely heavily on this tier and a single stray character used to be
+// enough to make the whole match fail. Still line-anchored and capped at 3
+// non-digit characters per side, so real text lines (labels, transaction
+// IDs, addresses) don't accidentally qualify.
 final RegExp _standaloneAmountLine = RegExp(
-  r'^\s*(?:[₹%©€$]\s*)?([\d]{1,7}(?:[.,]\d{1,3})?)\s*(?:[©%€$]\s*)?$',
+  r'^[^\d\n]{0,3}([\d]{1,7}(?:[.,]\d{1,3})?)[^\d\n]{0,3}$',
   multiLine: true,
 );
 
@@ -87,31 +94,45 @@ double? _parseAmountString(String raw) {
   return value;
 }
 
+/// Masked bank/card account numbers ("XXXXXX1028", "XXXX XXXX XXXX 1234",
+/// "****1028"). These are extremely common in "Debited from" / account
+/// lines on PhonePe, MobiKwik, and most bank UPI apps, and the trailing
+/// digits are easily mistaken for an amount (especially since `X`/`R` are
+/// also treated as OCR-misread rupee symbols below). They are stripped out
+/// entirely before amount matching runs so they can never win.
+final RegExp _maskedAccountPattern = RegExp(
+  r'(?:[X\*]\s?){3,}[\s-]?\d{2,6}',
+  caseSensitive: false,
+);
+
 double? _extractAmount(String text) {
-  List<double> candidates = [];
+  final String sanitized = text.replaceAll(_maskedAccountPattern, ' ');
 
-  for (final match in _amountWithSymbol.allMatches(text)) {
-    double? value = _parseAmountString(match.group(1)!);
-    if (value != null && value > 0) candidates.add(value);
+  // Candidates are collected in priority tiers rather than pooled together,
+  // since blindly taking the largest number across the whole screenshot is
+  // fragile (transaction IDs, dates, and cashback lines can all contain
+  // numbers larger than the actual amount). Only fall through to a lower
+  // tier if the higher-confidence tier found nothing.
+  List<double> tier(RegExp pattern, {bool wholeMatch = false}) {
+    final List<double> values = [];
+    for (final match in pattern.allMatches(sanitized)) {
+      final String? raw = wholeMatch ? match.group(0) : match.group(1);
+      if (raw == null) continue;
+      final double? value = _parseAmountString(raw);
+      if (value != null && value > 0) values.add(value);
+    }
+    return values;
   }
 
-  for (final match in _amountAfterLabel.allMatches(text)) {
-    double? value = _parseAmountString(match.group(1)!);
-    if (value != null && value > 0) candidates.add(value);
-  }
-
-  // Standalone number lines ("250", "398 ©"), which is how the amount
-  // typically renders when OCR drops the rupee symbol.
-  for (final match in _standaloneAmountLine.allMatches(text)) {
-    double? value = _parseAmountString(match.group(1)!);
-    if (value != null && value > 0) candidates.add(value);
-  }
-
-  // Last resort: any comma grouped amount (e.g. "1,234.56" without symbol).
-  for (final match in _plainAmount.allMatches(text)) {
-    double? value = _parseAmountString(match.group(0)!);
-    if (value != null && value > 0) candidates.add(value);
-  }
+  // Tier 1: an explicit currency symbol/prefix directly against the number.
+  List<double> candidates = tier(_amountWithSymbol);
+  // Tier 2: a labelled amount ("Amount", "Total", ...).
+  if (candidates.isEmpty) candidates = tier(_amountAfterLabel);
+  // Tier 3: a standalone number line (amount rendered with no symbol/label,
+  // common when OCR drops the rupee glyph entirely).
+  if (candidates.isEmpty) candidates = tier(_standaloneAmountLine);
+  // Tier 4 (last resort): any comma-grouped number anywhere in the text.
+  if (candidates.isEmpty) candidates = tier(_plainAmount, wholeMatch: true);
 
   if (candidates.isEmpty) return null;
   candidates.sort();
@@ -222,11 +243,33 @@ final List<DateFormat> _dateFormats = [
   DateFormat("d MMM yyyy"), // 12 Aug 2026
 ];
 
-final RegExp _ampm = RegExp(r'\b(am|pm)\b', caseSensitive: false);
+/// Matches am/pm case-insensitively, without relying on `\b` immediately
+/// before it. A digit and a letter are both "word" characters, so `\b` does
+/// NOT create a boundary between them — meaning `\b(am|pm)\b` silently fails
+/// to match a very common OCR pattern like "3:20am" or "7:41pm" (no space
+/// before the marker), leaving it lowercase and breaking every DateFormat
+/// below (intl requires uppercase AM/PM). Lookarounds are used instead:
+/// not preceded/followed by a letter, which still correctly avoids matching
+/// inside words like "Amount" or "campaign" (the "o" after "am" in
+/// "Amount", and the "c" before "am" in "campaign", both fail the lookaround
+/// since they ARE letters) while fixing the digit-glued case.
+final RegExp _ampm = RegExp(r'(?<![A-Za-z])(am|pm)(?![A-Za-z])', caseSensitive: false);
 
 /// OCR sometimes renders the year as "13 Aug '26"; intl treats `'` as an
 /// escape so normalize it to a full 4-digit year first.
 final RegExp _apostropheYear = RegExp(r"'(\d{2})\b");
+
+/// Matches bullet/middot separators some apps use between date and time
+/// ("15 August 2026 • 05:27PM"), which are normalized to a comma so they
+/// match the existing comma-separated format entries instead of needing a
+/// dedicated format variant per separator character.
+final RegExp _bulletSeparator = RegExp(r'\s*[•·]\s*');
+
+/// Matches a digit directly followed by AM/PM with no space ("05:27PM").
+/// Normalizing this to always include a space lets a single spaced format
+/// entry cover both cases, instead of maintaining a spaced/unspaced pair
+/// for every date pattern.
+final RegExp _noSpaceBeforeAmPm = RegExp(r'(\d)(AM|PM)\b');
 
 DateTime? _extractDateTime(String text) {
   for (String line in text.split("\n")) {
@@ -237,9 +280,37 @@ DateTime? _extractDateTime(String text) {
       _apostropheYear,
       (match) => "20${match.group(1)}",
     );
+    line = line.replaceAll(_bulletSeparator, ', ');
+    line = line.replaceAllMapped(
+      _noSpaceBeforeAmPm,
+      (match) => "${match.group(1)} ${match.group(2)}",
+    );
+    line = line.replaceAll(RegExp(r'\s+'), ' ');
     String trimmed = line.trim();
     for (final format in _dateFormats) {
       DateTime? parsed = format.tryParse(trimmed);
+      if (parsed != null) return parsed;
+    }
+  }
+  // Some apps wrap the date and time onto two separate OCR lines (narrow
+  // screenshots). Retry by joining each adjacent line pair before giving up.
+  final List<String> rawLines = text.split("\n");
+  for (int i = 0; i < rawLines.length - 1; i++) {
+    String joined = "${rawLines[i].trim()} ${rawLines[i + 1].trim()}";
+    joined = joined.replaceAllMapped(
+        _ampm, (match) => match.group(1)!.toUpperCase());
+    joined = joined.replaceAllMapped(
+      _apostropheYear,
+      (match) => "20${match.group(1)}",
+    );
+    joined = joined.replaceAll(_bulletSeparator, ', ');
+    joined = joined.replaceAllMapped(
+      _noSpaceBeforeAmPm,
+      (match) => "${match.group(1)} ${match.group(2)}",
+    );
+    joined = joined.replaceAll(RegExp(r'\s+'), ' ').trim();
+    for (final format in _dateFormats) {
+      DateTime? parsed = format.tryParse(joined);
       if (parsed != null) return parsed;
     }
   }

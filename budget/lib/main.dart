@@ -81,6 +81,7 @@ class _InitializeAppState extends State<InitializeApp> {
     // Handle a UPI screenshot that was shared into the app while it was closed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       handlePendingSharedUpiImage(context);
+      initUpiShareListener(() => handlePendingSharedUpiImage(context));
     });
   }
 

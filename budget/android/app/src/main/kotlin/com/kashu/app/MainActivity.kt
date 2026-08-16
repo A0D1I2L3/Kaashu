@@ -12,20 +12,22 @@ import java.io.FileOutputStream
 
 class MainActivity : FlutterFragmentActivity() {
     private var pendingSharedUpiImagePath: String? = null
+    private var upiMethodChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_NAME)
-            .setMethodCallHandler { call, result ->
-                when (call.method) {
-                    "getPendingSharedUpiImage" -> {
-                        val path = pendingSharedUpiImagePath
-                        pendingSharedUpiImagePath = null
-                        result.success(path)
-                    }
-                    else -> result.notImplemented()
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_NAME)
+        upiMethodChannel = channel
+        channel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getPendingSharedUpiImage" -> {
+                    val path = pendingSharedUpiImagePath
+                    pendingSharedUpiImagePath = null
+                    result.success(path)
                 }
+                else -> result.notImplemented()
             }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,13 +38,18 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleShareIntent(intent)
+        // A new image was shared while the app was already running. Store it
+        // and poke Flutter so it scans immediately instead of waiting for the
+        // app to resume.
+        if (handleShareIntent(intent)) {
+            upiMethodChannel?.invokeMethod("onUpiImageShared", null)
+        }
     }
 
-    private fun handleShareIntent(intent: Intent?) {
-        if (intent?.action != Intent.ACTION_SEND) return
-        val type = intent.type ?: return
-        if (!type.startsWith("image/")) return
+    private fun handleShareIntent(intent: Intent?): Boolean {
+        if (intent?.action != Intent.ACTION_SEND) return false
+        val type = intent.type ?: return false
+        if (!type.startsWith("image/")) return false
         val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
                 ?: intent.clipData?.getItemAt(0)?.uri
@@ -51,9 +58,10 @@ class MainActivity : FlutterFragmentActivity() {
             intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                 ?: intent.clipData?.getItemAt(0)?.uri
         }
-        if (uri == null) return
-        val path = copyUriToCache(uri) ?: return
+        if (uri == null) return false
+        val path = copyUriToCache(uri) ?: return false
         pendingSharedUpiImagePath = path
+        return true
     }
 
     private fun copyUriToCache(uri: Uri): String? {

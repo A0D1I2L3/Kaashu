@@ -21,6 +21,16 @@ import 'package:provider/provider.dart';
 
 const MethodChannel upiMethodChannel = MethodChannel("kashu.upi");
 
+/// Registers a callback that fires when the Android share sheet hands over a
+/// new UPI image while the app is already running (native `onNewIntent`).
+void initUpiShareListener(Future<void> Function() onShared) {
+  upiMethodChannel.setMethodCallHandler((call) async {
+    if (call.method == "onUpiImageShared") {
+      await onShared();
+    }
+  });
+}
+
 /// Picks an image from the gallery and returns its path, or null if cancelled.
 Future<String?> pickUpiScreenshotPath() async {
   final XFile? image =
@@ -59,7 +69,9 @@ Future<void> scanUpiScreenshot(BuildContext context,
       error = "upi-scan-failed-description".tr();
     } else {
       parsed = parseUPITransaction(ocrResult.rawText);
-      print("[UpiScan] Parsed: " + (parsed?.toString() ?? "null"));
+      print("[UpiScan] Parsed: amount=${parsed?.amount} merchant=${parsed?.merchant} "
+          "upiId=${parsed?.upiId} isIncome=${parsed?.isIncome} "
+          "dateTime=${parsed?.dateTime} upiRef=${parsed?.upiRef}");
       if (parsed == null) {
         error = "upi-scan-failed-description".tr();
       }
@@ -200,11 +212,32 @@ Future<String?> getPendingSharedUpiImage() async {
 }
 
 /// Called after the app has loaded (and on resume) to handle a UPI screenshot
-/// that was shared into the app via the Android share sheet.
+/// that was shared into the app via the Android share sheet. Parses the image
+/// and opens the add-transaction form pre-filled with the detected details.
 Future<void> handlePendingSharedUpiImage(BuildContext context) async {
+  print("[UpiScan] handlePendingSharedUpiImage: "
+      "scan-on-share=${appStateSettings["scan-upi-on-share"]} "
+      "onboarded=${appStateSettings["hasOnboarded"]}");
   if (appStateSettings["scan-upi-on-share"] != true) return;
   if (appStateSettings["hasOnboarded"] != true) return;
   final String? path = await getPendingSharedUpiImage();
+  print("[UpiScan] pending path: $path");
   if (path == null) return;
-  await scanUpiScreenshot(context, imagePath: path);
+  await scanUpiScreenshot(
+    context,
+    imagePath: path,
+    onParsed: (upi) async {
+      await pushRoute(
+        context,
+        AddTransactionPage(
+          routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+          selectedAmount: upi.amount,
+          selectedIncome: upi.isIncome,
+          selectedTitle: upi.merchantDisplayName,
+          selectedNotes: upi.note,
+          selectedDate: upi.dateTime,
+        ),
+      );
+    },
+  );
 }
