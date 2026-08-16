@@ -1,12 +1,12 @@
-# Kashu
+# Kaashu
 
 <div align="center">
-  <img alt="Kashu icon" src="promotional/icons/icon.jpeg" width="150px">
+  <img alt="Kaashu icon" src="promotional/icons/icon.jpeg" width="150px">
 </div>
 
-**Kashu** is a private, local-first money management app for Android and web. Track expenses, plan budgets, set goals, and manage multiple accounts and currencies — all on your own device. No accounts, no cloud, no paywalls.
+**Kaashu** is a private, local-first money management app for Android and web. Track expenses, plan budgets, set goals, and manage multiple accounts and currencies — all on your own device. No accounts, no cloud, no paywalls.
 
-Kashu is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense tracker, rebuilt with a focus on privacy and UPI-centric features for Indian users. Built with **Flutter** and [Drift](https://drift.simonbinder.eu/) (SQLite).
+Kaashu is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense tracker, rebuilt with a focus on privacy and UPI-centric features for Indian users. Built with **Flutter** and [Drift](https://drift.simonbinder.eu/) (SQLite).
 
 ---
 
@@ -29,8 +29,9 @@ Kashu is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense 
 
 ### 📸 UPI Screenshot Extraction
 
-- Scan a UPI payment screenshot (PhonePe, Google Pay, Paytm, BHIM, and more) from inside the app, or share it straight to Kashu from any UPI app's share sheet.
-- On-device OCR (PP-OCR v5) parses the amount, merchant, date, and transaction type, then pre-fills a new transaction. Screenshots never leave your device.
+- Scan a UPI payment screenshot (PhonePe, Google Pay, Paytm, BHIM, and more) from inside the app, or share it straight to Kaashu from any UPI app's share sheet.
+- Share-scan flow: sharing a screenshot into the app runs the scan automatically and opens the add-transaction form pre-filled with the detected amount, merchant, UPI ID, date, and transaction type.
+- Fully on-device OCR (PP-OCR v5 via ONNX Runtime) with a visible loading indicator while scanning — screenshots never leave your device.
 - Review mode flags low-confidence parses so you can correct them before saving.
 
 ### 💱 Multiple Currencies & Accounts
@@ -170,4 +171,4 @@ Windows helpers are in `scripts/` (`update_translations.bat`, etc.).
 
 ## License
 
-GNU GPL v3.0. Kashu is a fork of [Cashew](https://github.com/jameskokoska/Cashew) by James Kokoska. See [LICENSE](LICENSE).
+GNU GPL v3.0. Kaashu is a fork of [Cashew](https://github.com/jameskokoska/Cashew) by James Kokoska. See [LICENSE](LICENSE).
