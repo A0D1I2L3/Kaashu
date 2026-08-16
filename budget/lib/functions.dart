@@ -1023,8 +1023,19 @@ popAllRoutes(BuildContext? context) {
 Future<dynamic> pushRoute(BuildContext? context, Widget page,
     {String? routeName}) async {
   BuildContext? contextToPush = context;
-  if (context == null) contextToPush = navigatorKey.currentContext;
+  if (contextToPush == null || !contextToPush.mounted) {
+    contextToPush = navigatorKey.currentContext;
+  }
   if (contextToPush == null) return;
+  // Some callers pass a context that lives above the Navigator (e.g. the app
+  // root while handling a shared UPI screenshot); fall back to the page
+  // navigator in that case.
+  try {
+    Navigator.of(contextToPush);
+  } catch (_) {
+    contextToPush = navigatorKey.currentContext;
+    if (contextToPush == null) return;
+  }
 
   minimizeKeyboard(contextToPush);
   // if (appStateSettings["iOSNavigation"]) {

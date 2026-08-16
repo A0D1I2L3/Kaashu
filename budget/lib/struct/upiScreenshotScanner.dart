@@ -38,7 +38,7 @@ Future<String?> pickUpiScreenshotPath() async {
   return image?.path;
 }
 
-/// Runs the full OCR pipeline (validation → preprocessing → ML Kit v2) on the
+/// Runs the full OCR pipeline (validation → preprocessing → PP-OCR v5) on the
 /// given image and returns the structured result.
 Future<UpiOcrResult> recognizeTextInImage(String imagePath) {
   return recognizeUpiScreenshot(imagePath);
@@ -51,17 +51,21 @@ Future<UpiOcrResult> recognizeTextInImage(String imagePath) {
 /// callback fills the caller's own fields instead of showing the result sheet.
 Future<void> scanUpiScreenshot(BuildContext context,
     {String? imagePath, Future<void> Function(UPITransaction)? onParsed}) async {
-  loadingIndeterminateKey.currentState?.setVisibility(true);
-
   String? path = imagePath;
+  if (path == null) {
+    path = await pickUpiScreenshotPath();
+    if (path == null) return; // User cancelled
+  }
+
   UPITransaction? parsed;
   String? error;
 
+  // Show a visible loading spinner while OCR runs (model inference takes a
+  // few seconds and is otherwise invisible on screen).
+  loadingIndeterminateKey.currentState?.setVisibility(true);
+  openLoadingPopup(context);
+
   try {
-    if (path == null) {
-      path = await pickUpiScreenshotPath();
-      if (path == null) return; // User cancelled
-    }
     final UpiOcrResult ocrResult = await recognizeTextInImage(path);
     final String ocrText = ocrResult.rawText;
     print("[UpiScan] OCR text: " + ocrText.replaceAll("\n", " \\n "));
@@ -81,6 +85,10 @@ Future<void> scanUpiScreenshot(BuildContext context,
     print("Error scanning UPI screenshot: " + e.toString());
   } finally {
     loadingIndeterminateKey.currentState?.setVisibility(false);
+  }
+
+  if (context.mounted) {
+    popRoute(context);
   }
 
   if (!context.mounted) return;
@@ -214,7 +222,9 @@ Future<String?> getPendingSharedUpiImage() async {
 /// Called after the app has loaded (and on resume) to handle a UPI screenshot
 /// that was shared into the app via the Android share sheet. Parses the image
 /// and opens the add-transaction form pre-filled with the detected details.
-Future<void> handlePendingSharedUpiImage(BuildContext context) async {
+Future<void> handlePendingSharedUpiImage(BuildContext? context) async {
+  final BuildContext? resolvedContext = context ?? navigatorKey.currentContext;
+  if (resolvedContext == null) return;
   print("[UpiScan] handlePendingSharedUpiImage: "
       "scan-on-share=${appStateSettings["scan-upi-on-share"]} "
       "onboarded=${appStateSettings["hasOnboarded"]}");
@@ -224,11 +234,11 @@ Future<void> handlePendingSharedUpiImage(BuildContext context) async {
   print("[UpiScan] pending path: $path");
   if (path == null) return;
   await scanUpiScreenshot(
-    context,
+    resolvedContext,
     imagePath: path,
     onParsed: (upi) async {
       await pushRoute(
-        context,
+        resolvedContext,
         AddTransactionPage(
           routesToPopAfterDelete: RoutesToPopAfterDelete.None,
           selectedAmount: upi.amount,

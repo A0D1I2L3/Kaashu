@@ -80,8 +80,9 @@ class _InitializeAppState extends State<InitializeApp> {
     super.initState();
     // Handle a UPI screenshot that was shared into the app while it was closed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      handlePendingSharedUpiImage(context);
-      initUpiShareListener(() => handlePendingSharedUpiImage(context));
+      handlePendingSharedUpiImage(navigatorKey.currentContext);
+      initUpiShareListener(
+          () => handlePendingSharedUpiImage(navigatorKey.currentContext));
     });
   }
 
@@ -147,7 +148,7 @@ class App extends StatelessWidget {
           updateGlobalAppLifecycleState: true,
           onAppResume: () async {
             await setHighRefreshRate();
-            handlePendingSharedUpiImage(context);
+            handlePendingSharedUpiImage(navigatorKey.currentContext);
           },
           child: InitializeBiometrics(
             child: InitializeAppLinks(

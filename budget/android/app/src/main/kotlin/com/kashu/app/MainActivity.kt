@@ -51,11 +51,16 @@ class MainActivity : FlutterFragmentActivity() {
         val type = intent.type ?: return false
         if (!type.startsWith("image/")) return false
         val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            try {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            } catch (e: Exception) {
+                null
+            } ?: intent.getStringExtra(Intent.EXTRA_STREAM)?.let { Uri.parse(it) }
                 ?: intent.clipData?.getItemAt(0)?.uri
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                ?: intent.getStringExtra(Intent.EXTRA_STREAM)?.let { Uri.parse(it) }
                 ?: intent.clipData?.getItemAt(0)?.uri
         }
         if (uri == null) return false
