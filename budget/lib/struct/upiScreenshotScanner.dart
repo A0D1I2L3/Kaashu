@@ -36,8 +36,11 @@ Future<UpiOcrResult> recognizeTextInImage(String imagePath) {
 
 /// Scans a UPI payment screenshot (either picked from the gallery or shared
 /// into the app), parses the details and offers to add a transaction.
+///
+/// When [onParsed] is provided (e.g. from within the add-transaction form), the
+/// callback fills the caller's own fields instead of showing the result sheet.
 Future<void> scanUpiScreenshot(BuildContext context,
-    {String? imagePath}) async {
+    {String? imagePath, Future<void> Function(UPITransaction)? onParsed}) async {
   loadingIndeterminateKey.currentState?.setVisibility(true);
 
   String? path = imagePath;
@@ -51,10 +54,12 @@ Future<void> scanUpiScreenshot(BuildContext context,
     }
     final UpiOcrResult ocrResult = await recognizeTextInImage(path);
     final String ocrText = ocrResult.rawText;
+    print("[UpiScan] OCR text: " + ocrText.replaceAll("\n", " \\n "));
     if (ocrText.trim().isEmpty) {
       error = "upi-scan-failed-description".tr();
     } else {
-      parsed = parseUPITransaction(ocrText);
+      parsed = parseUPITransaction(ocrResult.rawText);
+      print("[UpiScan] Parsed: " + (parsed?.toString() ?? "null"));
       if (parsed == null) {
         error = "upi-scan-failed-description".tr();
       }
@@ -81,6 +86,11 @@ Future<void> scanUpiScreenshot(BuildContext context,
       onSubmit: () => popRoute(context),
       onSubmitLabel: "ok".tr(),
     );
+    return;
+  }
+
+  if (onParsed != null) {
+    await onParsed(parsed!);
     return;
   }
 

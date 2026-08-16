@@ -59,6 +59,7 @@ import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/iconButtonScaled.dart';
 import 'package:budget/struct/linkHighlighter.dart';
+import 'package:budget/struct/upiScreenshotScanner.dart';
 import 'package:budget/widgets/listItem.dart';
 import 'package:budget/widgets/outlinedButtonStacked.dart';
 import 'package:budget/widgets/tappableTextEntry.dart';
@@ -1045,6 +1046,35 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         enableDoubleColumn(context)
             ? Container(height: 20)
             : Container(height: 10),
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+              start: 22, end: 22, bottom: 10),
+          child: Button(
+            label: "scan-upi-screenshot".tr(),
+            icon: appStateSettings["outlinedIcons"]
+                ? Icons.document_scanner_outlined
+                : Icons.document_scanner_rounded,
+            onTap: () => scanUpiScreenshot(
+              context,
+              onParsed: (upi) async {
+                setSelectedAmount(
+                  upi.amount,
+                  upi.amount.toString(),
+                );
+                setSelectedIncome(upi.isIncome);
+                if (upi.merchantDisplayName != null) {
+                  setSelectedTitle(upi.merchantDisplayName!);
+                }
+                if (upi.note != null) {
+                  setSelectedNoteController(upi.note!);
+                }
+                setState(() {
+                  if (upi.dateTime != null) selectedDate = upi.dateTime!;
+                });
+              },
+            ),
+          ),
+        ),
         TitleInput(
           clearWhenUnfocused: true,
           tryToCompleteSearch: true,

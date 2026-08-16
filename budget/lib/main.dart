@@ -6,6 +6,7 @@ import 'package:budget/struct/logging.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
+import 'package:budget/struct/upiScreenshotScanner.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
 import 'package:budget/widgets/util/watchForDayChange.dart';
@@ -74,6 +75,15 @@ class InitializeApp extends StatefulWidget {
 }
 
 class _InitializeAppState extends State<InitializeApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Handle a UPI screenshot that was shared into the app while it was closed.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      handlePendingSharedUpiImage(context);
+    });
+  }
+
   void refreshAppState() {
     setState(() {});
   }
@@ -99,8 +109,8 @@ class App extends StatelessWidget {
       actions: keyboardIntents,
       themeAnimationDuration: Duration(milliseconds: 400),
       themeAnimationCurve: CustomDelayedCurve(),
-      key: ValueKey('KashuAppMain'),
-      title: 'Kashu',
+      key: ValueKey('KaashuAppMain'),
+      title: 'Kaashu',
       theme: getLightTheme(),
       darkTheme: getDarkTheme(),
       scrollBehavior: ScrollBehaviorOverride(),
@@ -136,6 +146,7 @@ class App extends StatelessWidget {
           updateGlobalAppLifecycleState: true,
           onAppResume: () async {
             await setHighRefreshRate();
+            handlePendingSharedUpiImage(context);
           },
           child: InitializeBiometrics(
             child: InitializeAppLinks(

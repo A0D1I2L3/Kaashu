@@ -152,7 +152,7 @@ class ExportCSV extends StatelessWidget {
 
       String fileName;
       if (dateTimeRange != null) {
-        fileName = "kashu-" +
+        fileName = "kaashu-" +
             (DateTime.now().millisecondsSinceEpoch).toString() +
             "-" +
             dateTimeRange.start.year.toString() +
@@ -169,7 +169,7 @@ class ExportCSV extends StatelessWidget {
             ".csv";
       } else {
         fileName =
-            "kashu-" + cleanFileNameString(DateTime.now().toString()) + ".csv";
+            "kaashu-" + cleanFileNameString(DateTime.now().toString()) + ".csv";
       }
 
       await saveCSV(boxContext: boxContext, csv: csv, fileName: fileName);

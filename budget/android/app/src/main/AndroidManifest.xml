@@ -29,7 +29,7 @@
   </queries>
     <application
         android:requestLegacyExternalStorage="true"
-        android:label="Kashu"
+        android:label="Kaashu"
         android:icon="@mipmap/ic_launcher">
         <!-- Use the new rendering engine Impeller (experimental) -->
         <!-- <meta-data

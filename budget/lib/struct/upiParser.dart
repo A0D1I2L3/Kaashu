@@ -29,6 +29,7 @@ class UPITransaction {
   }
 
   String? get merchantDisplayName => merchant ?? upiId;
+  final bool requiresReview = false;
 }
 
 /// Attempts to parse a UPI payment screenshot OCR result.
