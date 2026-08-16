@@ -3,13 +3,13 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
+import 'package:mobile_ocr/mobile_ocr.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// ML Kit Text Recognition v2 works best on images up to 2048x2048. Larger
-/// inputs are internally downscaled, shrinking small screenshot text, so the
-/// image is pre-normalized to this side length before OCR.
+/// PP-OCR v5 (via mobile_ocr) natively accepts images up to 4096px, but a
+/// 2048px normalization keeps recognition fast and consistent on large
+/// screenshots, so the image is pre-normalized to this side length before OCR.
 const double upiOcrTargetSide = 2048;
 
 /// A single recognized word/symbol with its position and confidence.
@@ -103,7 +103,7 @@ class UpiOcrResult {
   /// Original image the screenshot was taken from.
   final String sourcePath;
 
-  /// Preprocessed image that was actually sent to ML Kit.
+  /// Preprocessed image that was actually sent to the OCR engine.
   final String? preprocessedPath;
 
   /// Which preprocessing steps were applied (for debugging).
@@ -224,12 +224,12 @@ Future<UpiImageValidation> validateUpiImage(String imagePath) async {
   }
 }
 
-/// Preprocesses a screenshot so ML Kit sees the maximum amount of text detail:
+/// Preprocesses a screenshot so the OCR engine sees the maximum amount of
+/// text detail:
 ///
 /// 1. Resize the longest side to [upiOcrTargetSide] (2048px) with cubic
-///    interpolation — ML Kit internally downscales anything larger, shrinking
-///    small screenshot text; anything smaller benefits from the upscale.
-/// 2. Convert to grayscale to remove color noise (ML Kit already works on
+///    interpolation — keeps large screenshots fast and consistent.
+/// 2. Convert to grayscale to remove color noise (the engine already works on
 ///    luminance, so this does not harm glyphs like ₹ / 1 / I / 0).
 /// 3. Only if the image is dark or low-contrast (e.g. dark-mode screenshots),
 ///    apply a linear contrast stretch across the full range.
@@ -322,61 +322,67 @@ _LuminanceStats _computeLuminanceStats(img.Image image) {
   return _LuminanceStats(mean, math.sqrt(math.max(0, variance)));
 }
 
-/// Maps the ML Kit [RecognizedText] onto the structured [UpiOcrResult],
-/// converting bounding boxes back into the original image's coordinate space.
-UpiOcrResult mapRecognizedText(
-  RecognizedText recognized, {
+/// Maps the mobile_ocr (PP-OCR v5) [TextBlock]s onto the structured
+/// [UpiOcrResult], converting bounding boxes back into the original image's
+/// coordinate space. The blocks arrive as individual text lines (detector
+/// regions), so each becomes one [UpiOcrLine] with a single element.
+UpiOcrResult mapTextDetectionResult(
+  List<TextBlock> blocks, {
   required String sourcePath,
   String? preprocessedPath,
   List<String> adjustments = const [],
   double scaleApplied = 1,
 }) {
   final coordScale = 1 / scaleApplied;
-  final blocks = <UpiOcrBlock>[];
-  for (final block in recognized.blocks) {
-    final lines = <UpiOcrLine>[];
-    for (final line in block.lines) {
-      final elements = <UpiOcrElement>[];
-      for (final element in line.elements) {
-        elements.add(
-          UpiOcrElement(
-            text: element.text,
-            boundingBox: _scaleRect(element.boundingBox, coordScale),
-            confidence: element.confidence,
-            cornerPoints: element.cornerPoints
-                .map((p) => math.Point<int>(
-                      (p.x / scaleApplied).round(),
-                      (p.y / scaleApplied).round(),
-                    ))
-                .toList(),
-          ),
-        );
-      }
-      lines.add(
-        UpiOcrLine(
-          text: line.text,
-          boundingBox: _scaleRect(line.boundingBox, coordScale),
-          confidence: line.confidence,
-          elements: elements,
-        ),
-      );
-    }
-    blocks.add(
-      UpiOcrBlock(
-        text: block.text,
+  final lines = <UpiOcrLine>[];
+  for (final block in blocks) {
+    final text = block.text.trim();
+    if (text.isEmpty) continue;
+    final cornerPoints = block.points
+        .map((p) => math.Point<int>(
+              (p.dx * coordScale).round(),
+              (p.dy * coordScale).round(),
+            ))
+        .toList();
+    final element = UpiOcrElement(
+      text: text,
+      boundingBox: _scaleRect(block.boundingBox, coordScale),
+      confidence: block.confidence,
+      cornerPoints: cornerPoints,
+    );
+    lines.add(
+      UpiOcrLine(
+        text: text,
         boundingBox: _scaleRect(block.boundingBox, coordScale),
-        lines: lines,
+        confidence: block.confidence,
+        elements: [element],
       ),
     );
   }
+  lines.sort(_compareTopLeft);
+  final upiBlocks = <UpiOcrBlock>[
+    for (final line in lines)
+      UpiOcrBlock(
+        text: line.text,
+        boundingBox: line.boundingBox,
+        lines: [line],
+      ),
+  ];
   return UpiOcrResult(
-    rawText: recognized.text,
-    blocks: blocks,
+    rawText: lines.map((line) => line.text).join("\n"),
+    blocks: upiBlocks,
     sourcePath: sourcePath,
     preprocessedPath: preprocessedPath,
     adjustments: adjustments,
     scaleApplied: scaleApplied,
   );
+}
+
+int _compareTopLeft(UpiOcrLine a, UpiOcrLine b) {
+  final topDiff = a.boundingBox.top.compareTo(b.boundingBox.top);
+  return topDiff != 0
+      ? topDiff
+      : a.boundingBox.left.compareTo(b.boundingBox.left);
 }
 
 ui.Rect _scaleRect(ui.Rect rect, double factor) {
@@ -388,9 +394,73 @@ ui.Rect _scaleRect(ui.Rect rect, double factor) {
   );
 }
 
+/// mobile_ocr (PP-OCR v5) caches its ONNX models under
+/// `<filesDir>/assets/mobile_ocr/` and validates them by SHA-256 before use.
+/// These constants mirror the plugin's ModelManager so the bundled assets are
+/// accepted as already-present and never re-downloaded.
+const List<String> _upiOcrModelNames = [
+  "det.onnx",
+  "rec.onnx",
+  "cls.onnx",
+  "ppocrv5_dict.txt",
+];
+const String _upiOcrModelVersion = "pp-ocrv5-202410";
+const String _upiOcrModelVersionFile = ".model_version";
+
+Future<void>? _upiOcrModelInit;
+
+/// Copies the bundled PP-OCR v5 models from the Flutter asset bundle into the
+/// cache directory the plugin expects, then warms up the ONNX sessions. After
+/// the first successful run this is a cheap no-op, so all OCR calls work
+/// entirely offline with no downloads.
+Future<void> ensureUpiOcrModels() {
+  final existing = _upiOcrModelInit;
+  if (existing != null) return existing;
+  final future = _initUpiOcrModels();
+  _upiOcrModelInit = future;
+  future.catchError((Object _) {
+    _upiOcrModelInit = null;
+  });
+  return future;
+}
+
+Future<void> _initUpiOcrModels() async {
+  final cacheDir = Directory(
+    '${(await getApplicationSupportDirectory()).path}'
+    '${Platform.pathSeparator}assets'
+    '${Platform.pathSeparator}mobile_ocr',
+  );
+  final versionFile =
+      File('${cacheDir.path}${Platform.pathSeparator}$_upiOcrModelVersionFile');
+
+  final versionMatches =
+      versionFile.existsSync() &&
+      versionFile.readAsStringSync().trim() == _upiOcrModelVersion;
+  final allPresent = _upiOcrModelNames.every(
+    (name) => File('${cacheDir.path}${Platform.pathSeparator}$name').existsSync(),
+  );
+
+  if (!versionMatches || !allPresent) {
+    if (!cacheDir.existsSync()) {
+      cacheDir.createSync(recursive: true);
+    }
+    for (final name in _upiOcrModelNames) {
+      final data = await rootBundle.load('assets/ppocr/$name');
+      final file = File('${cacheDir.path}${Platform.pathSeparator}$name');
+      await file.writeAsBytes(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        flush: true,
+      );
+    }
+    await versionFile.writeAsString(_upiOcrModelVersion, flush: true);
+  }
+
+  await MobileOcr().prepareModels();
+}
+
 /// Runs the full OCR pipeline on a screenshot:
 ///
-/// validate → preprocess → ML Kit Text Recognition v2 → structured result.
+/// validate → preprocess → PP-OCR v5 (mobile_ocr) → structured result.
 Future<UpiOcrResult> recognizeUpiScreenshot(String imagePath) async {
   final validation = await validateUpiImage(imagePath);
   if (!validation.isValid) {
@@ -410,22 +480,22 @@ Future<UpiOcrResult> recognizeUpiScreenshot(String imagePath) async {
     );
   }
 
-  final TextRecognizer textRecognizer =
-      TextRecognizer(script: TextRecognitionScript.latin);
   try {
-    final RecognizedText recognized = await textRecognizer
-        .processImage(InputImage.fromFilePath(preprocess.path));
-    return mapRecognizedText(
-      recognized,
+    await ensureUpiOcrModels();
+    final result = await MobileOcr().detectText(
+      imagePath: preprocess.path,
+      includeAllConfidenceScores: true,
+    );
+    return mapTextDetectionResult(
+      result.blocks,
       sourcePath: imagePath,
-      preprocessedPath:
-          preprocess.path == imagePath ? null : preprocess.path,
+      preprocessedPath: preprocess.path == imagePath ? null : preprocess.path,
       adjustments: preprocess.adjustments,
       scaleApplied: preprocess.scale,
     );
   } on PlatformException catch (e) {
     throw UpiOcrException("upi-ocr-error", e);
-  } finally {
-    await textRecognizer.close();
+  } on OcrException catch (e) {
+    throw UpiOcrException("upi-ocr-error", e);
   }
 }

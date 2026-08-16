@@ -30,7 +30,7 @@ Kashu is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense 
 ### 📸 UPI Screenshot Extraction
 
 - Scan a UPI payment screenshot (PhonePe, Google Pay, Paytm, BHIM, and more) from inside the app, or share it straight to Kashu from any UPI app's share sheet.
-- On-device OCR (ML Kit) parses the amount, merchant, date, and transaction type, then pre-fills a new transaction. Screenshots never leave your device.
+- On-device OCR (PP-OCR v5) parses the amount, merchant, date, and transaction type, then pre-fills a new transaction. Screenshots never leave your device.
 - Review mode flags low-confidence parses so you can correct them before saving.
 
 ### 💱 Multiple Currencies & Accounts

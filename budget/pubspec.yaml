@@ -81,7 +81,10 @@ dependencies:
   visibility_detector: ^0.4.0+2
   confetti: ^0.7.0
   image_picker: ^1.1.2
-  google_mlkit_text_recognition: ^0.16.0
+  mobile_ocr:
+    git:
+      url: https://github.com/ente/mobile_ocr
+      ref: 0c68f88f20607cfcb10286422860350ccb024acd
   image: ^4.2.0
   flutter_displaymode: ^0.6.0
   notification_listener_service: ^0.3.3
@@ -167,6 +170,7 @@ flutter:
     - assets/static/generated/
     - assets/static/generated/currencies.json
     - assets/static/language-names.json
+    - assets/ppocr/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
