@@ -2,18 +2,14 @@ import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addBudgetPage.dart';
-import 'package:budget/pages/editCategoriesPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/struct/shareBudget.dart';
-import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
 import 'package:budget/widgets/fab.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
-import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/noResults.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
@@ -474,9 +470,7 @@ Future<DeletePopupAction?> deleteBudgetPopup(
   );
   if (action == DeletePopupAction.Delete) {
     dynamic result = true;
-    if (budget.sharedKey != null) {
-      result = await deleteSharedBudgetPopup(context, budget);
-    } else if (budget.addedTransactionsOnly) {
+    if (budget.addedTransactionsOnly) {
       int? numTransactions =
           await database.getTotalCountOfTransactionsInBudget(budget.budgetPk);
       if (numTransactions != null && numTransactions > 0) {
@@ -517,46 +511,6 @@ Future<DeletePopupAction?> deleteBudgetPopup(
     }
   }
   return action;
-}
-
-Future<dynamic> deleteSharedBudgetPopup(context, Budget budget) {
-  if (budget.sharedOwnerMember == SharedOwnerMember.owner) {
-    return openPopup(
-      context,
-      title: "Delete Shared Budget?",
-      description:
-          "You own this budget. Deleting it will remove it from the server. All transactions belonging to this budget will no longer be connected to a budget.",
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.delete_outlined
-          : Icons.delete_rounded,
-      onCancel: () {
-        popRoute(context, false);
-      },
-      onCancelLabel: "cancel".tr(),
-      onSubmit: () async {
-        popRoute(context, true);
-      },
-      onSubmitLabel: "delete".tr(),
-    );
-  } else {
-    return openPopup(
-      context,
-      title: "Leave Shared Budget?",
-      description:
-          "You are a member of this budget. Deleting it will remove you from the shared group. All transactions belonging to this budget will no longer be connected to a budget, until you are added back.",
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.delete_outlined
-          : Icons.delete_rounded,
-      onCancel: () {
-        popRoute(context, false);
-      },
-      onCancelLabel: "cancel".tr(),
-      onSubmit: () async {
-        popRoute(context, true);
-      },
-      onSubmitLabel: "delete".tr(),
-    );
-  }
 }
 
 // either "none", null, or a Budget type

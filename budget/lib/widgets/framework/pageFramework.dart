@@ -13,7 +13,6 @@ import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/transactionEntry/swipeToSelectTransactions.dart';
 import 'package:flutter/material.dart';
 import 'package:budget/colors.dart';
-import 'package:budget/widgets/pullDownToRefreshSync.dart';
 import 'package:flutter/services.dart';
 
 ValueNotifier<bool> isSwipingToDismissPageDown = ValueNotifier<bool>(false);
@@ -782,11 +781,7 @@ class PageFrameworkState extends State<PageFramework>
     );
 
     if (backButtonEnabled == false) {
-      return PullDownToRefreshSync(
-        child: childListener,
-        scrollController: _scrollController,
-        checkEnabled: () => widget.dragDownToDismissEnabled != false,
-      );
+      return childListener;
     } else {
       return childListener;
     }

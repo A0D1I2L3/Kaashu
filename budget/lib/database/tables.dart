@@ -1,17 +1,11 @@
 import 'package:budget/functions.dart';
-import 'package:budget/pages/addBudgetPage.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/objectivesListPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/struct/databaseGlobal.dart';
-import 'package:budget/struct/firebaseAuthGlobal.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/struct/shareBudget.dart';
-import 'package:budget/struct/syncClient.dart';
-import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/periodCyclePicker.dart';
 import 'package:budget/widgets/walletEntry.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:async/async.dart';
 import 'package:drift/drift.dart';
@@ -3539,12 +3533,11 @@ class FinanceDatabase extends _$FinanceDatabase {
           }
         }
 
+        // Note: Kashu is local-only, so shared budget cloud sync was removed.
         if (transaction.sharedKey != null && budget.sharedKey != null) {
-          sendTransactionSet(transaction, budget);
           transaction =
               transaction.copyWith(sharedStatus: Value(SharedStatus.waiting));
         } else if (transaction.sharedKey == null && budget.sharedKey != null) {
-          sendTransactionAdd(transaction, budget);
           transaction =
               transaction.copyWith(sharedStatus: Value(SharedStatus.waiting));
         }
@@ -3590,214 +3583,6 @@ class FinanceDatabase extends _$FinanceDatabase {
 
     return into(transactions)
         .insert((companionToInsert), mode: InsertMode.insertOrReplace);
-  }
-
-  // ************************************************************
-  // The following functions should only be used for data sync
-  // Unless another use case makes sense
-  // These are also not logged into the Delete log!
-  // ************************************************************
-
-  Future<bool> processSyncLogs(List<SyncLog> syncLogs) async {
-    // We want InsertMode.insertOrReplace because
-    // if null values are inserted we want to overwrite it with a null
-    // For example when a transactions subCategoryPk is set to null
-    // We need to set it to null, nt keep the default when syncing!
-
-    syncLogs.sort(
-        (a, b) => a.transactionDateTime!.compareTo(b.transactionDateTime!));
-
-    await batch((batch) {
-      for (SyncLog syncLog in syncLogs) {
-        if (syncLog.deleteLogType != null) {
-          print("Sync Log: Deleting " +
-              syncLog.deleteLogType.toString() +
-              " " +
-              syncLog.pk.toString());
-        } else if (syncLog.updateLogType != null) {
-          String name = "";
-          try {
-            name = syncLog.itemToUpdate?.title;
-          } catch (e) {}
-          try {
-            name = syncLog.itemToUpdate?.name;
-          } catch (e) {}
-          print(
-            "Sync Log: Creating " +
-                syncLog.updateLogType.toString() +
-                " " +
-                name,
-          );
-        }
-
-        if (syncLog.deleteLogType == DeleteLogType.TransactionWallet) {
-          batch.deleteWhere(
-            wallets,
-            (tbl) =>
-                tbl.walletPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType == DeleteLogType.TransactionCategory) {
-          batch.deleteWhere(
-            categories,
-            (tbl) =>
-                tbl.categoryPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType == DeleteLogType.Budget) {
-          batch.deleteWhere(
-            budgets,
-            (tbl) =>
-                tbl.budgetPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType == DeleteLogType.CategoryBudgetLimit) {
-          batch.deleteWhere(
-            categoryBudgetLimits,
-            (tbl) =>
-                tbl.categoryLimitPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType == DeleteLogType.Transaction) {
-          batch.deleteWhere(
-            transactions,
-            (tbl) =>
-                tbl.transactionPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType ==
-            DeleteLogType.TransactionAssociatedTitle) {
-          batch.deleteWhere(
-            associatedTitles,
-            (tbl) =>
-                tbl.associatedTitlePk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.deleteLogType == DeleteLogType.ScannerTemplate) {
-          batch.deleteWhere(scannerTemplates,
-              (tbl) => tbl.scannerTemplatePk.equals(syncLog.pk));
-        } else if (syncLog.deleteLogType == DeleteLogType.Objective) {
-          batch.deleteWhere(
-            objectives,
-            (tbl) =>
-                tbl.objectivePk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-        } else if (syncLog.updateLogType == UpdateLogType.TransactionWallet) {
-          batch.update(
-            wallets,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.walletPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(wallets, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.TransactionCategory) {
-          batch.update(
-            categories,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.categoryPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(categories, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.Budget) {
-          batch.update(
-            budgets,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.budgetPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(budgets, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.CategoryBudgetLimit) {
-          batch.update(
-            categoryBudgetLimits,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.categoryLimitPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(categoryBudgetLimits, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.Transaction) {
-          batch.update(
-            transactions,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.transactionPk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(transactions, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType ==
-            UpdateLogType.TransactionAssociatedTitle) {
-          batch.update(
-            associatedTitles,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.associatedTitlePk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(associatedTitles, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.ScannerTemplate) {
-          batch.update(
-            scannerTemplates,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.scannerTemplatePk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(scannerTemplates, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        } else if (syncLog.updateLogType == UpdateLogType.Objective) {
-          batch.update(
-            objectives,
-            syncLog.itemToUpdate,
-            where: (tbl) =>
-                tbl.objectivePk.equals(syncLog.pk) &
-                tbl.dateTimeModified.isSmallerThanValue(
-                  syncLog.transactionDateTime ?? DateTime.now(),
-                ),
-          );
-          batch.insert(objectives, syncLog.itemToUpdate,
-              mode: InsertMode.insertOrReplace);
-        }
-      }
-    });
-    return true;
   }
 
   // This doesn't handle shared transactions!
@@ -4031,8 +3816,6 @@ class FinanceDatabase extends _$FinanceDatabase {
     int result = await into(categories)
         .insert((companionToInsert), mode: InsertMode.insertOrReplace);
 
-    if (updateSharedEntry)
-      updateTransactionOnServerAfterChangingCategoryInformation(category);
     return result;
   }
 
@@ -4233,24 +4016,6 @@ class FinanceDatabase extends _$FinanceDatabase {
 
     budget = budget.copyWith(name: budget.name.trim());
     // print(budget);
-
-    if (budget.sharedKey != null && updateSharedEntry == true) {
-      FirebaseFirestore? db = await firebaseGetDBInstance();
-      if (db == null) {
-        return -1;
-      }
-      DocumentReference collectionRef =
-          db.collection('budgets').doc(budget.sharedKey);
-      collectionRef.update({
-        "name": budget.name,
-        "amount": budget.amount,
-        "colour": budget.colour,
-        "startDate": budget.startDate,
-        "endDate": budget.endDate,
-        "periodLength": budget.periodLength,
-        "reoccurrence": enumRecurrence[budget.reoccurrence],
-      });
-    }
 
     budget = budget.copyWith(dateTimeModified: Value(DateTime.now()));
     BudgetsCompanion companionToInsert = budget.toCompanion(true);
@@ -4821,15 +4586,6 @@ class FinanceDatabase extends _$FinanceDatabase {
 
   // delete budget given key
   Future<int> deleteBudget(context, Budget budget) async {
-    if (budget.sharedKey != null) {
-      loadingIndeterminateKey.currentState?.setVisibility(true);
-      if (budget.sharedOwnerMember == SharedOwnerMember.owner) {
-        bool result = await removedSharedFromBudget(budget);
-      } else {
-        bool result = await leaveSharedBudget(budget);
-      }
-      loadingIndeterminateKey.currentState?.setVisibility(false);
-    }
     if (budget.addedTransactionsOnly) {
       // Clear the budget the transactions are added to
       List<Transaction> transactionsAddedToThisBudget =
@@ -4881,17 +4637,7 @@ class FinanceDatabase extends _$FinanceDatabase {
       {bool updateSharedEntry = true}) async {
     if (updateSharedEntry == true && appStateSettings["sharedBudgets"] == false)
       updateSharedEntry = false;
-    // Send the delete log to the server
-    if (updateSharedEntry) {
-      Transaction transactionToDelete =
-          await database.getTransactionFromPk(transactionPk);
-      if (transactionToDelete.sharedKey != null &&
-          transactionToDelete.sharedReferenceBudgetPk != null) {
-        Budget budget = await database
-            .getBudgetInstance(transactionToDelete.sharedReferenceBudgetPk!);
-        sendTransactionDelete(transactionToDelete, budget);
-      }
-    }
+    // Note: Kashu is local-only, so there is no server delete log to send.
     await createDeleteLog(DeleteLogType.Transaction, transactionPk);
     return (delete(transactions)
           ..where((t) => t.transactionPk.equals(transactionPk)))
@@ -4902,19 +4648,7 @@ class FinanceDatabase extends _$FinanceDatabase {
       {bool updateSharedEntry = true}) async {
     if (updateSharedEntry == true && appStateSettings["sharedBudgets"] == false)
       updateSharedEntry = false;
-    // Send the delete log to the server
-    for (String transactionPk in transactionPks) {
-      if (updateSharedEntry) {
-        Transaction transactionToDelete =
-            await database.getTransactionFromPk(transactionPk);
-        if (transactionToDelete.sharedKey != null &&
-            transactionToDelete.sharedReferenceBudgetPk != null) {
-          Budget budget = await database
-              .getBudgetInstance(transactionToDelete.sharedReferenceBudgetPk!);
-          sendTransactionDelete(transactionToDelete, budget);
-        }
-      }
-    }
+    // Note: Kashu is local-only, so there is no server delete log to send.
 
     await createDeleteLogs(DeleteLogType.Transaction, transactionPks);
     return (delete(transactions)

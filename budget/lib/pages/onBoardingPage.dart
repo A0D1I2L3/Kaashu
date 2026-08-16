@@ -5,16 +5,13 @@ import 'package:budget/pages/addBudgetPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/currencyPicker.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:budget/widgets/linearGradientFadedEdges.dart';
-import 'package:budget/widgets/moreIcons.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
-import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/viewAllTransactionsButton.dart';
 import 'package:drift/drift.dart' hide Column;
@@ -454,85 +451,21 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
               : SizedBox.shrink(),
           getPlatform() == PlatformOS.isIOS
               ? SizedBox.shrink()
-              : SettingsContainerOutlined(
-                  onTap: () async {
-                    loadingIndeterminateKey.currentState?.setVisibility(true);
-                    openLoadingPopupTryCatch(
-                      () async {
-                        // Can maybe use this function, but on web first login does not sync...
-                        // Let's just use the functionality below this
-                        // await signInAndSync(context, next: () {});
-
-                        await signInGoogle(
-                          context: context,
-                          waitForCompletion: false,
-                          next: () {},
-                        );
-                        if (appStateSettings["username"] == "" &&
-                            googleUser != null) {
-                          updateSettings(
-                              "username", googleUser?.displayName ?? "",
-                              pagesNeedingRefresh: [0],
-                              updateGlobalState: false);
-                        }
-                        // If user has sync backups, but no real backups it will show up here
-                        // For now disable restoring of a backup popup, the sync backups will be restored automatically using the function call below
-                        // var result;
-                        // List<drive.File>? files = (await getDriveFiles()).$2;
-                        // if ((files?.length ?? 0) > 0) {
-                        //   result = await openPopup(
-                        //     context,
-                        //     icon: appStateSettings["outlinedIcons"] ? Icons.cloud_sync_outlined : Icons.cloud_sync_rounded,
-                        //     title: "backup-found".tr(),
-                        //     description: "backup-found-description".tr(),
-                        //     onSubmit: () {
-                        //       popRoute(context, true);
-                        //     },
-                        //     onCancel: () {
-                        //       popRoute(context, false);
-                        //     },
-                        //     onSubmitLabel: "restore".tr(),
-                        //     onCancelLabel: "cancel".tr(),
-                        //   );
-                        // }
-                        // if (result == true) {
-                        //   chooseBackup(context, hideDownloadButton: true);
-                        // } else if (result == false && googleUser != null) {
-                        //   openLoadingPopup(context);
-                        //   // set this to true so cloud functions run
-                        //   entireAppLoaded = true;
-                        //   await runAllCloudFunctions(
-                        //     context,
-                        //     forceSignIn: true,
-                        //   );
-                        //   popRoute(context);
-                        //   nextNavigation();
-                        // }
-                        // else {
-                        //   nextNavigation();
-                        // }
-
-                        // set this to true so cloud functions run
+              : IntrinsicWidth(
+                  child: Padding(
+                    padding:
+                        const EdgeInsetsDirectional.symmetric(horizontal: 8.0),
+                    child: Button(
+                      label: "lets-go".tr(),
+                      onTap: () async {
                         entireAppLoaded = true;
-                        await runAllCloudFunctions(
-                          context,
-                          forceSignIn: true,
-                        );
-
+                        await runAllCloudFunctions(context,
+                            forceSignIn: true);
                         nextNavigation();
-                        loadingIndeterminateKey.currentState
-                            ?.setVisibility(false);
                       },
-                      onError: (e) {
-                        print("Error signing in: " + e.toString());
-                        loadingIndeterminateKey.currentState
-                            ?.setVisibility(false);
-                      },
-                    );
-                  },
-                  title: "sign-in-with-google".tr(),
-                  icon: MoreIcons.google,
-                  isExpanded: false,
+                      expandedLayout: false,
+                    ),
+                  ),
                 ),
           getPlatform() == PlatformOS.isIOS
               ? SizedBox.shrink()

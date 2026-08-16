@@ -35,7 +35,6 @@ import 'package:flutter/material.dart';
 import 'package:budget/widgets/scrollbarWrap.dart';
 import 'package:budget/widgets/slidingSelectorIncomeExpense.dart';
 import 'package:budget/widgets/linearGradientFadedEdges.dart';
-import 'package:budget/widgets/pullDownToRefreshSync.dart';
 import 'package:budget/widgets/util/rightSideClipper.dart';
 import 'package:flutter/services.dart';
 import 'package:budget/widgets/util/checkWidgetLaunch.dart';
@@ -244,174 +243,165 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return SwipeToSelectTransactions(
       listID: "0",
-      child: PullDownToRefreshSync(
-        scrollController: _scrollController,
-        child: Stack(
-          children: [
-            AndroidOnly(child: CheckWidgetLaunch()),
-            AndroidOnly(child: RenderHomePageWidgets()),
-            Scaffold(
-              resizeToAvoidBottomInset: false,
-              body: ScrollbarWrap(
-                scrollController: _scrollController,
-                child: ListView(
-                  controller: _scrollController,
-                  children: [
-                    PreviewDemoWarning(),
-                    if (useSmallBanner) SizedBox(height: 13),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        useSmallBanner
-                            ? Expanded(
-                                child: HomePageWelcomeBannerSmall(
+      child: Stack(
+        children: [
+          AndroidOnly(child: CheckWidgetLaunch()),
+          AndroidOnly(child: RenderHomePageWidgets()),
+          Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: ScrollbarWrap(
+              scrollController: _scrollController,
+              child: ListView(
+                controller: _scrollController,
+                children: [
+                  PreviewDemoWarning(),
+                  if (useSmallBanner) SizedBox(height: 13),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      useSmallBanner
+                          ? Expanded(
+                              child: HomePageWelcomeBannerSmall(
+                                showUsername: showUsername,
+                                showGreeting: showGreeting,
+                                username: appStateSettings["username"] ?? "",
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                      Tooltip(
+                        message: "edit-home".tr(),
+                        child: IconButton(
+                          padding: EdgeInsetsDirectional.all(15),
+                          onPressed: () {
+                            pushRoute(context, EditHomePage());
+                          },
+                          icon: Icon(appStateSettings["outlinedIcons"]
+                              ? Icons.more_vert_outlined
+                              : Icons.more_vert_rounded),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Wipe all remaining pixels off - sometimes graphics artifacts are left behind
+                  Container(
+                      height: 1,
+                      color: Theme.of(context).colorScheme.background),
+
+                  showWelcomeBanner
+                      ? ConstrainedBox(
+                          constraints: BoxConstraints(
+                              minHeight: getExpandedHeaderHeight(context, null,
+                                      isHomePageSpace: true) /
+                                  1.34),
+                          child: Container(
+                            // Subtract one (1) here because of the thickness of the wiper above
+                            alignment: AlignmentDirectional.bottomStart,
+                            padding: EdgeInsetsDirectional.only(
+                                start: 9,
+                                bottom: enableDoubleColumn(context) ? 10 : 17,
+                                end: 9),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                HomePageUsername(
+                                  animationControllerHeader:
+                                      _animationControllerHeader,
+                                  animationControllerHeader2:
+                                      _animationControllerHeader2,
                                   showUsername: showUsername,
                                   showGreeting: showGreeting,
+                                  enterNameBottomSheet: enterNameBottomSheet,
                                   username: appStateSettings["username"] ?? "",
                                 ),
-                              )
-                            : SizedBox.shrink(),
-                        Tooltip(
-                          message: "edit-home".tr(),
-                          child: IconButton(
-                            padding: EdgeInsetsDirectional.all(15),
-                            onPressed: () {
-                              pushRoute(context, EditHomePage());
-                            },
-                            icon: Icon(appStateSettings["outlinedIcons"]
-                                ? Icons.more_vert_outlined
-                                : Icons.more_vert_rounded),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    // Wipe all remaining pixels off - sometimes graphics artifacts are left behind
-                    Container(
-                        height: 1,
-                        color: Theme.of(context).colorScheme.background),
-
-                    showWelcomeBanner
-                        ? ConstrainedBox(
-                            constraints: BoxConstraints(
-                                minHeight: getExpandedHeaderHeight(
-                                        context, null,
-                                        isHomePageSpace: true) /
-                                    1.34),
-                            child: Container(
-                              // Subtract one (1) here because of the thickness of the wiper above
-                              alignment: AlignmentDirectional.bottomStart,
-                              padding: EdgeInsetsDirectional.only(
-                                  start: 9,
-                                  bottom: enableDoubleColumn(context) ? 10 : 17,
-                                  end: 9),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  HomePageUsername(
-                                    animationControllerHeader:
-                                        _animationControllerHeader,
-                                    animationControllerHeader2:
-                                        _animationControllerHeader2,
-                                    showUsername: showUsername,
-                                    showGreeting: showGreeting,
-                                    enterNameBottomSheet: enterNameBottomSheet,
-                                    username:
-                                        appStateSettings["username"] ?? "",
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : SizedBox(height: 5),
-                    // Not full screen
-                    if (enableDoubleColumn(context) != true) ...[
-                      KeepAliveClientMixin(child: HomePageRatingBox()),
-                      for (String sectionKey
-                          in appStateSettings["homePageOrder"])
-                        homePageSections[sectionKey] ?? SizedBox.shrink(),
-                    ],
-                    // Full screen top section
-                    if (enableDoubleColumn(context) == true) ...[
-                      for (String sectionKey
-                          in appStateSettings["homePageOrderFullScreen"])
-                        if (homePageSectionsFullScreenCenter
-                            .contains(sectionKey))
-                          homePageSections[sectionKey] ?? SizedBox.shrink()
-                    ],
-                    // Full screen bottom split section
-                    if (enableDoubleColumn(context) == true)
-                      LayoutBuilder(builder: (context, constraints) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Flexible(
-                              child: Column(
-                                children: [
-                                  for (String sectionKey in appStateSettings[
-                                      "homePageOrderFullScreen"])
-                                    if (homePageSectionsFullScreenLeft
-                                        .contains(sectionKey))
-                                      LinearGradientFadedEdges(
-                                        enableStart: false,
-                                        enableBottom: false,
-                                        enableTop: false,
-                                        child: ClipRRect(
-                                          clipper: RightSideClipper(),
-                                          child: homePageSections[sectionKey] ??
-                                              SizedBox.shrink(),
-                                        ),
-                                      ),
-                                ],
-                              ),
-                            ),
-                            Flexible(
-                              child: Column(
-                                children: [
-                                  for (String sectionKey in appStateSettings[
-                                      "homePageOrderFullScreen"])
-                                    if (homePageSectionsFullScreenRight
-                                        .contains(sectionKey))
-                                      LinearGradientFadedEdges(
-                                        enableEnd: false,
-                                        enableBottom: false,
-                                        enableTop: false,
-                                        child: ClipRRect(
-                                          clipper: RightSideClipper(),
-                                          child: homePageSections[sectionKey] ??
-                                              SizedBox.shrink(),
-                                        ),
-                                      ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    SizedBox(
-                      height: enableDoubleColumn(context) == true
-                          ? 40
-                          : areAllDisabledAfterTransactionsList(
-                                  homePageSections)
-                              ? 25
-                              : 73,
-                    ),
-                    // Wipe all remaining pixels off - sometimes graphics artifacts are left behind
-                    Container(
-                        height: 1,
-                        color: Theme.of(context).colorScheme.background),
+                        )
+                      : SizedBox(height: 5),
+                  // Not full screen
+                  if (enableDoubleColumn(context) != true) ...[
+                    KeepAliveClientMixin(child: HomePageRatingBox()),
+                    for (String sectionKey in appStateSettings["homePageOrder"])
+                      homePageSections[sectionKey] ?? SizedBox.shrink(),
                   ],
-                ),
+                  // Full screen top section
+                  if (enableDoubleColumn(context) == true) ...[
+                    for (String sectionKey
+                        in appStateSettings["homePageOrderFullScreen"])
+                      if (homePageSectionsFullScreenCenter.contains(sectionKey))
+                        homePageSections[sectionKey] ?? SizedBox.shrink()
+                  ],
+                  // Full screen bottom split section
+                  if (enableDoubleColumn(context) == true)
+                    LayoutBuilder(builder: (context, constraints) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Column(
+                              children: [
+                                for (String sectionKey in appStateSettings[
+                                    "homePageOrderFullScreen"])
+                                  if (homePageSectionsFullScreenLeft
+                                      .contains(sectionKey))
+                                    LinearGradientFadedEdges(
+                                      enableStart: false,
+                                      enableBottom: false,
+                                      enableTop: false,
+                                      child: ClipRRect(
+                                        clipper: RightSideClipper(),
+                                        child: homePageSections[sectionKey] ??
+                                            SizedBox.shrink(),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                          ),
+                          Flexible(
+                            child: Column(
+                              children: [
+                                for (String sectionKey in appStateSettings[
+                                    "homePageOrderFullScreen"])
+                                  if (homePageSectionsFullScreenRight
+                                      .contains(sectionKey))
+                                    LinearGradientFadedEdges(
+                                      enableEnd: false,
+                                      enableBottom: false,
+                                      enableTop: false,
+                                      child: ClipRRect(
+                                        clipper: RightSideClipper(),
+                                        child: homePageSections[sectionKey] ??
+                                            SizedBox.shrink(),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  SizedBox(
+                    height: enableDoubleColumn(context) == true
+                        ? 40
+                        : areAllDisabledAfterTransactionsList(homePageSections)
+                            ? 25
+                            : 73,
+                  ),
+                  // Wipe all remaining pixels off - sometimes graphics artifacts are left behind
+                  Container(
+                      height: 1,
+                      color: Theme.of(context).colorScheme.background),
+                ],
               ),
             ),
-            SelectedTransactionsAppBar(
-              pageID: "0",
-            ),
-          ],
-        ),
+          ),
+          SelectedTransactionsAppBar(
+            pageID: "0",
+          ),
+        ],
       ),
     );
   }
@@ -480,7 +470,7 @@ class _HomePageRatingBoxState extends State<HomePageRatingBox> {
                 child: Column(
                   children: [
                     TextFont(
-                      text: "enjoying-cashew-question".tr(),
+                      text: "enjoying-kashu-question".tr(),
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       textAlign: TextAlign.center,

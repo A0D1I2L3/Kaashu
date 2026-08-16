@@ -1,11 +1,9 @@
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
-import 'package:budget/pages/editCategoriesPage.dart';
 import 'package:budget/pages/exchangeRatesPage.dart';
 import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/navBarIconsData.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
@@ -303,10 +301,6 @@ class NavigationSidebarState extends State<NavigationSidebar> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               SizedBox(height: 40),
-                              GoogleAccountLoginButton(
-                                navigationSidebarButton: true,
-                                isButtonSelected: selectedIndex == 8,
-                              ),
                               NavigationSidebarButtonWithNavBarIconData(
                                 navBarIconDataKey: "settings",
                                 currentPageIndex: selectedIndex,
@@ -315,7 +309,6 @@ class NavigationSidebarState extends State<NavigationSidebar> {
                                 navBarIconDataKey: "about",
                                 currentPageIndex: selectedIndex,
                               ),
-                              SyncButton(),
                               SizedBox(height: 10),
                               SizedBox(
                                   height:
@@ -435,134 +428,6 @@ class SidebarClock extends StatelessWidget {
             key: ValueKey(appStateSettings["expandedNavigationSidebar"]),
           );
   }
-}
-
-class SyncButton extends StatefulWidget {
-  const SyncButton({super.key});
-
-  @override
-  State<SyncButton> createState() => _SyncButtonState();
-}
-
-class _SyncButtonState extends State<SyncButton> {
-  GlobalKey<RefreshButtonState> refreshButtonKey = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    Widget refreshButton = Opacity(
-      opacity: 0.6,
-      child: RefreshButton(
-        key: refreshButtonKey,
-        halfAnimation: true,
-        customIcon: appStateSettings["outlinedIcons"]
-            ? Icons.sync_outlined
-            : Icons.sync_rounded,
-        flipIcon: true,
-        padding: EdgeInsetsDirectional.zero,
-        iconOnly: true,
-        onTap: () async {
-          if (runningCloudFunctions == false) {
-            await runAllCloudFunctions(
-              context,
-              forceSignIn: true,
-            );
-          }
-        },
-      ),
-    );
-    return AnimatedExpanded(
-      expand: !(appStateSettings["currentUserEmail"] == "" ||
-          appStateSettings["backupSync"] == false),
-      child: Padding(
-        padding:
-            const EdgeInsetsDirectional.symmetric(horizontal: 5, vertical: 1),
-        child: Tappable(
-          borderRadius: getPlatform() == PlatformOS.isIOS ? 10 : 50,
-          onTap: () async {
-            if (runningCloudFunctions == false) {
-              refreshButtonKey.currentState?.startAnimation();
-              await runAllCloudFunctions(
-                context,
-                forceSignIn: true,
-              );
-              refreshButtonKey.currentState?.startAnimation();
-            }
-          },
-          // Do not use Animated Switcher because otherwise duplicate key!
-          child: appStateSettings["expandedNavigationSidebar"]
-              ? Padding(
-                  key: ValueKey(appStateSettings["expandedNavigationSidebar"]),
-                  padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: 20, vertical: 13),
-                  child: Row(
-                    children: [
-                      refreshButton,
-                      SizedBox(width: 15),
-                      Flexible(
-                        child: AnimatedSwitcher(
-                          duration: Duration(milliseconds: 500),
-                          child: SizedBox(
-                            key: ValueKey(appStateSettings["lastSynced"]),
-                            child: TimerBuilder.periodic(
-                              Duration(seconds: 5),
-                              builder: (context) {
-                                DateTime? dateTimeLastSynced =
-                                    getTimeLastSynced();
-                                int diff = DateTime.now()
-                                    .difference(
-                                        dateTimeLastSynced ?? DateTime.now())
-                                    .inDays;
-                                return TextFont(
-                                  textAlign: TextAlign.start,
-                                  textColor: diff > 1
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer
-                                          .withOpacity(0.5)
-                                      : getColor(context, "textLight"),
-                                  fontSize: 13,
-                                  maxLines: 3,
-                                  text: "synced".tr() +
-                                      " " +
-                                      (dateTimeLastSynced == null
-                                          ? "never".tr()
-                                          : getTimeAgo(dateTimeLastSynced)),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Padding(
-                  key: ValueKey(appStateSettings["expandedNavigationSidebar"]),
-                  padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: 0, vertical: 13),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [refreshButton],
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-DateTime? getTimeLastSynced() {
-  DateTime? timeLastSynced = null;
-  try {
-    if (appStateSettings["lastSynced"] == null) throw ("lastSynced is null!");
-    timeLastSynced = DateTime.tryParse(
-      appStateSettings["lastSynced"],
-    );
-  } catch (e) {
-    // print("Error parsing time last synced: " +
-    //     e.toString());
-  }
-  return timeLastSynced;
 }
 
 class NavigationSidebarButtonWithNavBarIconData extends StatelessWidget {
