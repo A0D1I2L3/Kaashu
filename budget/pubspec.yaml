@@ -25,9 +25,9 @@ dependencies:
     sdk: flutter
   simple_animations: ^5.0.2
   sa3_liquid: ^1.0.1
-  intl: ^0.18.1
+  intl: ^0.20.2
   animations: ^2.0.11
-  flutter_sticky_header: ^0.6.5
+  flutter_sticky_header: ^0.8.0
   sticky_and_expandable_list: ^1.1.3
   fl_chart: ^0.68.0
   # database dependencies
@@ -37,14 +37,9 @@ dependencies:
   path: ^1.9.0
   math_expressions: ^2.5.0
   share_plus: ^10.0.0
-  google_sign_in: ^6.2.1
-  googleapis: ^13.1.0
   universal_html: ^2.2.4
-  flutter_charset_detector: ^1.0.2
-  file_picker:
-    git:
-      # This fork implements https://github.com/miguelpruivo/flutter_file_picker/issues/1404
-      url: https://github.com/melWiss/flutter_file_picker.git
+  flutter_charset_detector: ^5.0.0
+  file_picker: ^10.3.10
   auto_size_text: ^3.0.0
   shared_preferences: ^2.2.3
   csv: ^6.0.0
@@ -53,11 +48,11 @@ dependencies:
   implicitly_animated_reorderable_list:
     path: ./packages/implicitly_animated_reorderable_list-0.4.2-modified/
   shimmer: ^3.0.0
-  carousel_slider: ^4.2.1
+  carousel_slider: ^5.1.2
   # flutter_notification_listener: ^1.3.2
   # installed_apps: ^1.3.1
   url_launcher: ^6.2.6
-  flutter_launcher_icons: ^0.10.0
+  flutter_launcher_icons: ^0.14.4
   package_info_plus: ^8.0.0
   # mrx_charts: ^0.1.3
   transparent_image: ^2.0.0
@@ -65,12 +60,6 @@ dependencies:
   animated_fractionally_sized_box: ^2.0.1
   flutter_local_notifications: ^17.2.1+1
   system_theme: ^3.0.0
-  firebase_core: ^3.2.0
-  firebase_auth: ^5.1.2
-  cloud_firestore: ^5.1.0
-  firebase_core_web: ^2.17.3
-  firebase_auth_web: ^5.12.4
-  recaptcha_enterprise_flutter: ^18.5.1
   sliver_tools: ^0.2.12
   reorderable_grid_view:
     git:
@@ -82,32 +71,34 @@ dependencies:
   app_settings: ^5.1.1
   provider: ^6.1.2
   in_app_review: ^2.0.9 
-  flutter_timezone: ^1.0.8
-  device_preview: ^1.1.0 
+  flutter_timezone: ^4.1.1
   scrollable_positioned_list: ^0.3.8
   easy_localization: ^3.0.7
   # simple_shadow: ^0.3.1
   quick_actions: ^1.0.7
   # feature_discovery: ^0.14.1
   gradient_borders: ^1.0.1
-  in_app_purchase: ^3.2.0
   visibility_detector: ^0.4.0+2
   confetti: ^0.7.0
   image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.16.0
+  image: ^4.2.0
   flutter_displaymode: ^0.6.0
   notification_listener_service: ^0.3.3
-  home_widget: ^0.5.0
+  home_widget: ^0.9.3
   material_symbols_icons: ^4.2768.0
   app_links: ^6.1.4
   expandable_page_view: ^1.0.17
   flutter_staggered_grid_view: ^0.7.0
   flutter_colorpicker: ^1.1.0
   
-# flutter pub run flutter_launcher_icons:main
-flutter_icons:
+# dart run flutter_launcher_icons
+flutter_launcher_icons:
   android: true
-  ios: true
-  image_path: "assets/icon/icon.png"
+  image_path: "assets/icon/icon-launcher.jpg"
+  adaptive_icon_foreground: "assets/icon/icon-transparent.png"
+  adaptive_icon_background: "#DFFBE9"
+  adaptive_icon_monochrome: "assets/icon/icon-transparent.png"
   min_sdk_android: 21
   web:
     generate: true
@@ -116,8 +107,32 @@ flutter_icons:
     theme_color: "#5f85c2"
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   drift_dev: ^2.14.0
   build_runner: ^2.4.7
+
+dependency_overrides:
+  # file_picker pulls the Windows implementation in on all native platforms via
+  # `if (dart.library.io)`, so win32 must compile even for Android-only builds.
+  # 5.0.6 uses UnmodifiableUint8ListView, which was removed from dart:typed_data.
+  win32: ^5.15.0
+  # 2.0.15 references the v1 embedding's PluginRegistry.Registrar, which the
+  # Flutter 3.38 engine removed.
+  flutter_plugin_android_lifecycle: ^2.0.35
+  # 0.8.8+2 references the v1 embedding's PluginRegistry.Registrar. Pinned
+  # to 0.8.12+25 (v1-free, plain AGP build) since 0.8.13+ requires AGP 8.13.
+  image_picker_android: 0.8.12+25
+  # Older versions of these Android plugins reference the v1 embedding's
+  # PluginRegistry.Registrar, which the Flutter 3.38 engine removed.
+  path_provider_android: ^2.3.1
+  # 1.0.32's build.gradle.kts uses AGP built-in Kotlin DSL that doesn't
+  # resolve in this project; 1.0.24 is the last v1-free plain-Groovy version.
+  quick_actions_android: 1.0.24
+  # 2.4.22+ / 6.3.30+ also use the unresolvable AGP built-in Kotlin DSL;
+  # pinned to the last v1-free plain-Groovy versions.
+  shared_preferences_android: 2.4.20
+  url_launcher_android: 6.3.28
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
