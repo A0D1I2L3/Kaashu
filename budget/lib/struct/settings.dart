@@ -200,7 +200,6 @@ Future<bool> updateSettings(
       } else if (page == 3) {
         settingsPageStateKey.currentState?.refreshState();
         settingsPageFrameworkStateKey.currentState?.refreshState();
-        purchasesStateKey.currentState?.refreshState();
       }
     }
   }
@@ -348,10 +347,10 @@ class TranslationsHelp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tappable(
       onTap: () {
-        openUrl('mailto:dapperappdeveloper@gmail.com');
+        openUrl("https://github.com/A0D1I2L3/Finbud/issues");
       },
       onLongPress: () {
-        copyToClipboard("dapperappdeveloper@gmail.com");
+        copyToClipboard("https://github.com/A0D1I2L3/Finbud/issues");
       },
       color: backgroundColor ??
           Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.7),
@@ -388,7 +387,7 @@ class TranslationsHelp extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: 'dapperappdeveloper@gmail.com',
+                    text: 'github.com/A0D1I2L3/Finbud/issues',
                     style: TextStyle(
                       decoration: TextDecoration.underline,
                       decorationStyle: TextDecorationStyle.solid,

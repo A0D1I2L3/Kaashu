@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
-import 'package:budget/pages/addEmailTemplate.dart';
 import 'package:budget/pages/addTransactionPage.dart';
-import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/throttler.dart';
@@ -254,26 +252,6 @@ Future processAddTransactionRouteFromParams(
   });
 }
 
-Future processMessageToParse(
-    BuildContext context, Map<String, String?> params) async {
-  String messageString = params["messageToParse"].toString();
-  recentCapturedNotifications.insert(0, messageString);
-  recentCapturedNotifications.take(50);
-  dynamic result = await queueTransactionFromMessage(
-    messageString,
-    willPushRoute: true,
-    dateTime: await getDateTimeFromParams(params, context),
-  );
-  if (result == false) {
-    pushRoute(
-      null,
-      AddEmailTemplate(
-        messagesList: recentCapturedNotifications,
-      ),
-    );
-  }
-}
-
 Future executeAppLink(BuildContext? context, Uri uri,
     {Function(dynamic)? onDebug}) async {
   if (appStateSettings["hasOnboarded"] != true) return;
@@ -286,10 +264,7 @@ Future executeAppLink(BuildContext? context, Uri uri,
   switch (endPoint) {
     case "addTransaction":
       if (context != null) {
-        if (params["messageToParse"] != null &&
-            appStateSettings["notificationScanningDebug"] == true) {
-          processMessageToParse(context, params);
-        } else if (params["JSON"] != null) {
+        if (params["JSON"] != null) {
           try {
             Map<String, dynamic> jsonData = json.decode(params["JSON"] ?? "");
             for (dynamic transactionObject in jsonData["transactions"]) {
@@ -318,10 +293,7 @@ Future executeAppLink(BuildContext? context, Uri uri,
       break;
     case "addTransactionRoute":
       if (context != null) {
-        if (params["messageToParse"] != null &&
-            appStateSettings["notificationScanningDebug"] == true) {
-          processMessageToParse(context, params);
-        } else if (params["JSON"] != null) {
+        if (params["JSON"] != null) {
           try {
             Map<String, dynamic> jsonData = json.decode(params["JSON"] ?? "");
             for (dynamic transactionObject in jsonData["transactions"]) {
@@ -350,7 +322,7 @@ Future executeAppLink(BuildContext? context, Uri uri,
       }
       break;
 
-    // Ensures we can see other pages of the Cashew website
+    // Ensures we can see other pages of the Kashu website
     // Such as the FAQ
     // default:
     //   if (context != null)
@@ -385,7 +357,7 @@ Future executeAppLink(BuildContext? context, Uri uri,
 //             loadingIndeterminateKey.currentState?.setVisibility(false);
 //           },
 //           onNavigationRequest: (NavigationRequest request) {
-//             if (request.url.startsWith('https://cashewapp.web.app/')) {
+//             if (request.url.startsWith('https://github.com/A0D1I2L3/Finbud')) {
 //               return NavigationDecision.navigate;
 //             } else {
 //               openUrl(request.url);

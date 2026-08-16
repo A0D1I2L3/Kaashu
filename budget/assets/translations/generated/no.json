@@ -472,7 +472,7 @@
   "error-getting-products": "Feil å få produkter",
   "error-getting-products-description": "Det var en feil som koblet seg til App Store. Prøv igjen senere.",
   "error-processing-order": "Det var en feilbehandling av kjøpet ditt. Vær så snill, prøv på nytt.",
-  "order-confirmation": "Takk for at du støtter cashew!",
+  "order-confirmation": "Takk for at du støtter Kashu!",
   "any-previous-purchases-restored": "Eventuelle tidligere kjøp ble gjenopprettet",
   "already-purchased": "Allerede kjøpt",
   "current-plan": "Gjeldende plan",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Slette valuta?",
   "custom-currency": "Tilpasset valuta",
   "select-an-entry-to-set-custom-exchange-rate": "Velg en oppføring for å angi en tilpasset valutakurs. Merk: Alle valutakursberegninger bruker USD som referanse.",
-  "enjoying-cashew-question": "Nyter appen?",
+  "enjoying-kashu-question": "Nyter appen?",
   "consider-rating": "Vurder å legge igjen en anmeldelse hvis du liker appen 😄 Takk!",
   "no-thanks": "Nei takk",
   "rate": "Vurdere!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Lånedetaljer",
   "set-details": "Angi detaljer",
   "import-warning": "Import Advarsel",
-  "import-warning-description": "Importen kan mislykkes! Sørg for at du har valgt en gyldig Cashew [.sqlite] eller [.sql] sikkerhetskopifil",
+  "import-warning-description": "Importen kan mislykkes! Sørg for at du har valgt en gyldig Kashu [.sqlite] eller [.sql] sikkerhetskopifil",
   "duplicate-budget-question": "Duplisert budsjett?",
   "duplicate-budget": "Duplikatbudsjett"
 }

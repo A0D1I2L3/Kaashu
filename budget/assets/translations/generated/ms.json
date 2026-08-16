@@ -472,7 +472,7 @@
   "error-getting-products": "Ralat mendapatkan produk",
   "error-getting-products-description": "Terdapat ralat yang menyambung ke App Store. Sila cuba sebentar lagi.",
   "error-processing-order": "Terdapat ralat memproses pembelian anda. Sila cuba lagi.",
-  "order-confirmation": "Terima kasih kerana menyokong Cashew!",
+  "order-confirmation": "Terima kasih kerana menyokong Kashu!",
   "any-previous-purchases-restored": "Sebarang pembelian sebelumnya telah dipulihkan",
   "already-purchased": "Sudah dibeli",
   "current-plan": "Rancangan semasa",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Padam mata wang?",
   "custom-currency": "Mata wang tersuai",
   "select-an-entry-to-set-custom-exchange-rate": "Pilih entri untuk menetapkan kadar pertukaran tersuai. Nota: Semua pengiraan kadar pertukaran menggunakan USD sebagai rujukan.",
-  "enjoying-cashew-question": "Menikmati aplikasinya?",
+  "enjoying-kashu-question": "Menikmati aplikasinya?",
   "consider-rating": "Pertimbangkan untuk meninggalkan ulasan jika anda menikmati aplikasi 😄 Terima kasih!",
   "no-thanks": "Tidak, Terima kasih",
   "rate": "Nilai!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Butiran Pinjaman",
   "set-details": "Tetapkan Butiran",
   "import-warning": "Amaran Import",
-  "import-warning-description": "Import mungkin gagal! Sila pastikan anda telah memilih fail sandaran Cashew [.sqlite] atau [.sql] yang sah",
+  "import-warning-description": "Import mungkin gagal! Sila pastikan anda telah memilih fail sandaran Kashu [.sqlite] atau [.sql] yang sah",
   "duplicate-budget-question": "Belanjawan Pendua?",
   "duplicate-budget": "Belanjawan Pendua"
 }

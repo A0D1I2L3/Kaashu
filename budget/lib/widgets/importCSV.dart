@@ -242,7 +242,7 @@ class _ImportCSVState extends State<ImportCSV> {
                       ? Icons.live_help_outlined
                       : Icons.live_help_rounded,
                   onPressed: () => openUrl(
-                      "https://cashewapp.web.app/faq.html#import-csv-data"),
+                      "https://github.com/A0D1I2L3/Finbud/issues"),
                 )
               : null,
           title: "assign-columns".tr(),
@@ -831,7 +831,7 @@ Future saveSampleCSV({required BuildContext boxContext}) async {
       "",
     ]);
     String csv = ListToCsvConverter().convert(csvData);
-    String fileName = "cashew-import-template" +
+    String fileName = "kashu-import-template" +
         DateTime.now().millisecondsSinceEpoch.toString() +
         ".csv";
     return saveCSV(boxContext: boxContext, csv: csv, fileName: fileName);

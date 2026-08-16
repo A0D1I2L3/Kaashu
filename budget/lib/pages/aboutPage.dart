@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
-import 'package:budget/pages/accountsPage.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/debugPage.dart';
 import 'package:budget/pages/detailedChangelogPage.dart';
@@ -10,7 +9,6 @@ import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/button.dart';
-import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:budget/widgets/moreIcons.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
@@ -43,7 +41,7 @@ class AboutPageState extends State<AboutPage> {
             amountLight: 0.2, amountDark: 0.6)
         : getColor(context, "lightDarkAccent");
 
-    Widget cashewInformation = Wrap(
+    Widget appInformation = Wrap(
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -113,10 +111,10 @@ class AboutPageState extends State<AboutPage> {
             const EdgeInsetsDirectional.symmetric(horizontal: 15, vertical: 5),
         child: Tappable(
           onTap: () {
-            openUrl('mailto:dapperappdeveloper@gmail.com');
+            openUrl("https://github.com/A0D1I2L3/Finbud/issues");
           },
           onLongPress: () {
-            copyToClipboard("dapperappdeveloper@gmail.com");
+            copyToClipboard("https://github.com/A0D1I2L3/Finbud/issues");
           },
           color: containerColor,
           borderRadius: getPlatform() == PlatformOS.isIOS ? 10 : 15,
@@ -133,7 +131,7 @@ class AboutPageState extends State<AboutPage> {
                   maxLines: 5,
                 ),
                 TextFont(
-                  text: "James",
+                  text: "A0D1I2L3",
                   fontSize: 29,
                   fontWeight: FontWeight.bold,
                   textColor: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -141,7 +139,7 @@ class AboutPageState extends State<AboutPage> {
                   maxLines: 5,
                 ),
                 TextFont(
-                  text: "dapperappdeveloper@gmail.com",
+                  text: "github.com/A0D1I2L3/Finbud",
                   fontSize: 16,
                   textAlign: TextAlign.center,
                   maxLines: 5,
@@ -543,7 +541,7 @@ class AboutPageState extends State<AboutPage> {
                       Flexible(
                         child: Column(
                           children: [
-                            cashewInformation,
+                            appInformation,
                             SizedBox(height: 15),
                             AboutLinks(containerColor: containerColor),
                             HorizontalBreak(
@@ -588,7 +586,7 @@ class AboutPageState extends State<AboutPage> {
               Padding(
                 padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: 15, vertical: 7),
-                child: cashewInformation,
+                child: appInformation,
               ),
               SizedBox(height: 5),
               AboutLinks(containerColor: containerColor),
@@ -760,54 +758,6 @@ void deleteAllDataFlow(BuildContext context) {
     icon: appStateSettings["outlinedIcons"]
         ? Icons.warning_outlined
         : Icons.warning_rounded,
-    onExtraLabel2: "erase-synced-data-and-cloud-backups".tr(),
-    onExtra2: () {
-      popRoute(context);
-      openBottomSheet(
-        context,
-        PopupFramework(
-          title: "erase-cloud-data".tr(),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  bottom: 18,
-                  start: 5,
-                  end: 5,
-                ),
-                child: TextFont(
-                  text: "erase-cloud-data-description".tr(),
-                  fontSize: 16.5,
-                  textAlign: TextAlign.center,
-                  maxLines: 10,
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: SyncCloudBackupButton(
-                      onTap: () async {
-                        popRoute(context);
-                        pushRoute(context, AccountsPage());
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 18),
-                  Expanded(
-                    child: BackupsCloudBackupButton(
-                      onTap: () async {
-                        popRoute(context);
-                        pushRoute(context, AccountsPage());
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    },
     onSubmit: () async {
       popRoute(context);
       openPopup(
@@ -855,7 +805,7 @@ class AboutLinks extends StatelessWidget {
             _buildTappable(
               context: context,
               isExternalLink: true,
-              onTap: () => openUrl("https://github.com/jameskokoska/Cashew"),
+              onTap: () => openUrl("https://github.com/A0D1I2L3/Finbud"),
               icon: MoreIcons.github,
               text: "app-is-open-source".tr(namedArgs: {"app": globalAppName}),
             ),
@@ -863,7 +813,7 @@ class AboutLinks extends StatelessWidget {
             _buildTappable(
               context: context,
               isExternalLink: true,
-              onTap: () => openUrl("https://cashewapp.web.app/faq.html"),
+              onTap: () => openUrl("https://github.com/A0D1I2L3/Finbud/issues"),
               icon: appStateSettings["outlinedIcons"]
                   ? Icons.live_help_outlined
                   : Icons.live_help_rounded,
@@ -904,7 +854,7 @@ class AboutLinks extends StatelessWidget {
             _buildTappable(
               context: context,
               isExternalLink: true,
-              onTap: () => openUrl("http://cashewapp.web.app/policy.html"),
+              onTap: () => openUrl("https://github.com/A0D1I2L3/Finbud/issues"),
               icon: appStateSettings["outlinedIcons"]
                   ? Icons.policy_outlined
                   : Icons.policy_rounded,
@@ -992,8 +942,7 @@ class AboutDeepLinking extends StatelessWidget {
     return AboutInfoBox(
       title: "deep-linking".tr(),
       showLink: false,
-      link:
-          "https://github.com/jameskokoska/Cashew?tab=readme-ov-file#app-links",
+      link: "https://github.com/A0D1I2L3/Finbud",
       list: [
         "deep-linking-description".tr(),
       ],

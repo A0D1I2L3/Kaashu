@@ -472,7 +472,7 @@
   "error-getting-products": "Vyskytla sa chyba pri získavaní produktov",
   "error-getting-products-description": "Vyskytla sa chyba pri pripájaní k obchodu aplikácie. Prosím skúste to neskôr.",
   "error-processing-order": "Vyskytla sa chyba pri spracovaní Vášho nákupu. Prosím skúste to neskôr.",
-  "order-confirmation": "Ďakujeme, že podporujete Cashew!",
+  "order-confirmation": "Ďakujeme, že podporujete Kashu!",
   "any-previous-purchases-restored": "Všetky predchádzajúce nákupy boli obnovené",
   "already-purchased": "Už zakúpené",
   "current-plan": "Aktuálny plán",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Odstrániť menu?",
   "custom-currency": "Vlastná mena",
   "select-an-entry-to-set-custom-exchange-rate": "Vyberte položky pre nastavenie vlastného výmenného kurzu. Poznámka: Všetky výmenné kurzy sú rátané s USD ako referenčnou menou. ",
-  "enjoying-cashew-question": "Páči sa Vám Cashew?",
+  "enjoying-kashu-question": "Páči sa Vám Kashu?",
   "consider-rating": "Ak sa Vám aplikácia páči, prosím ohodnoťte ju. 😄 Ďakujeme!",
   "no-thanks": "Nie, ďakujem",
   "rate": "Ohodnotiť!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Podrobnosti o pôžičkách",
   "set-details": "Nastaviť Podrobnosti",
   "import-warning": "Upozornenie na import",
-  "import-warning-description": "Import môže zlyhať! Uistite sa, že ste vybrali platný záložný súbor Cashew [.sqlite] alebo [.sql]",
+  "import-warning-description": "Import môže zlyhať! Uistite sa, že ste vybrali platný záložný súbor Kashu [.sqlite] alebo [.sql]",
   "duplicate-budget-question": "Duplicitný rozpočet?",
   "duplicate-budget": "Duplicitný rozpočet"
 }

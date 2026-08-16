@@ -984,7 +984,7 @@
   "delete-currency-question": "Видалити валюту?",
   "custom-currency": "Власна валюта",
   "select-an-entry-to-set-custom-exchange-rate": "Виберіть пункт, щоб встановити власний курс обміну. Примітка: У всіх розрахунках курсу обміну використовується USD як еталон.",
-  "enjoying-cashew-question": "Подобається Cashew?",
+  "enjoying-kashu-question": "Подобається Kashu?",
   "consider-rating": "Залиште відгук, якщо вам подобається застосунок 😄 Дякую!",
   "no-thanks": "Ні, дякую",
   "rate": "Оцінити!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Деталі кредитів",
   "set-details": "Деталі набору",
   "import-warning": "Попередження про імпорт",
-  "import-warning-description": "Імпорт може не вдатися! Переконайтеся, що ви вибрали дійсний файл резервної копії Cashew [.sqlite] або [.sql]",
+  "import-warning-description": "Імпорт може не вдатися! Переконайтеся, що ви вибрали дійсний файл резервної копії Kashu [.sqlite] або [.sql]",
   "duplicate-budget-question": "Дубльований бюджет?",
   "duplicate-budget": "Дубльований бюджет"
 }

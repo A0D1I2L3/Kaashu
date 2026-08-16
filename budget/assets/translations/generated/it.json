@@ -472,7 +472,7 @@
   "error-getting-products": "Errore nell'ottenere prodotti",
   "error-getting-products-description": "C'è stato un errore nel collegamento all'App Store. Per favore riprova più tardi.",
   "error-processing-order": "C'è stato un errore nel processare il tuo acquisto. Per favore riprova.",
-  "order-confirmation": "Grazie per aver sostenuto Cashew!",
+  "order-confirmation": "Grazie per aver sostenuto Kashu!",
   "any-previous-purchases-restored": "Eventuali acquisti precedenti sono stati ripristinati",
   "already-purchased": "Già acquistato",
   "current-plan": "Piano attuale",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Elimina la valuta?",
   "custom-currency": "Valuta personalizzata",
   "select-an-entry-to-set-custom-exchange-rate": "Seleziona una voce per impostare un tasso di cambio personalizzato. Nota: tutti i calcoli del tasso di cambio utilizzano USD come riferimento.",
-  "enjoying-cashew-question": "Ti godi l'app?",
+  "enjoying-kashu-question": "Ti godi l'app?",
   "consider-rating": "Considera di lasciare una recensione se ti piace l'app 😄 Grazie!",
   "no-thanks": "No grazie",
   "rate": "Valutare!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Dettagli prestiti",
   "set-details": "Imposta i dettagli",
   "import-warning": "Avviso di importazione",
-  "import-warning-description": "L'importazione potrebbe non riuscire! Assicurati di aver selezionato un file di backup Cashew [.sqlite] o [.sql] valido",
+  "import-warning-description": "L'importazione potrebbe non riuscire! Assicurati di aver selezionato un file di backup Kashu [.sqlite] o [.sql] valido",
   "duplicate-budget-question": "Budget duplicato?",
   "duplicate-budget": "Bilancio duplicato"
 }

@@ -472,7 +472,7 @@
   "error-getting-products": "Fout bij het krijgen van producten",
   "error-getting-products-description": "Er was een fout die verbinding maakte met de App Store. Probeer het later opnieuw.",
   "error-processing-order": "Er was een foutverwerking van uw aankoop. Probeer het opnieuw.",
-  "order-confirmation": "Bedankt voor het steunen van Cashew!",
+  "order-confirmation": "Bedankt voor het steunen van Kashu!",
   "any-previous-purchases-restored": "Eerdere aankopen zijn hersteld",
   "already-purchased": "Al gekocht",
   "current-plan": "Huidige plan",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Valuta verwijderen?",
   "custom-currency": "Aangepaste valuta",
   "select-an-entry-to-set-custom-exchange-rate": "Selecteer een item om een ​​aangepaste wisselkoers in te stellen. Opmerking: alle wisselkoersberekeningen gebruiken USD als referentie.",
-  "enjoying-cashew-question": "Genieten van de app?",
+  "enjoying-kashu-question": "Genieten van de app?",
   "consider-rating": "Overweeg om een ​​recensie achter te laten als u geniet van de app 😄 Bedankt!",
   "no-thanks": "Nee bedankt",
   "rate": "Tarief!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Leningendetails",
   "set-details": "Details instellen",
   "import-warning": "Importwaarschuwing",
-  "import-warning-description": "Het importeren mislukt mogelijk! Zorg ervoor dat u een geldig Cashew-back-upbestand [.sqlite] of [.sql] hebt geselecteerd",
+  "import-warning-description": "Het importeren mislukt mogelijk! Zorg ervoor dat u een geldig Kashu-back-upbestand [.sqlite] of [.sql] hebt geselecteerd",
   "duplicate-budget-question": "Dubbele begroting?",
   "duplicate-budget": "Dubbele begroting"
 }

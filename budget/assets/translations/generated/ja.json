@@ -472,7 +472,7 @@
   "error-getting-products": "製品の取得エラー",
   "error-getting-products-description": "App Storeへの接続にエラーが発生しました。後でもう一度お試しください",
   "error-processing-order": "購入処理にエラーが発生しました。もう一度やり直してください",
-  "order-confirmation": "Cashewをサポートしてくれてありがとう！",
+  "order-confirmation": "Kashuをサポートしてくれてありがとう！",
   "any-previous-purchases-restored": "以前の購入は復元されました",
   "already-purchased": "購入済み",
   "current-plan": "現在の計画",
@@ -984,7 +984,7 @@
   "delete-currency-question": "通貨を削除しますか？",
   "custom-currency": "カスタム通貨",
   "select-an-entry-to-set-custom-exchange-rate": "エントリを選択して、カスタム為替レートを設定します。注：すべての為替レートの計算は、USDを参照として使用します。",
-  "enjoying-cashew-question": "アプリを楽しんでいますか？",
+  "enjoying-kashu-question": "アプリを楽しんでいますか？",
   "consider-rating": "アプリを楽しんでいただけたら、レビューを残してください😄ありがとう！",
   "no-thanks": "いいえ",
   "rate": "評価する！",
@@ -1178,7 +1178,7 @@
   "loans-details": "ローンの詳細",
   "set-details": "セット内容",
   "import-warning": "輸入に関する警告",
-  "import-warning-description": "インポートが失敗する可能性があります。有効な Cashew [.sqlite] または [.sql] バックアップ ファイルを選択していることを確認してください。",
+  "import-warning-description": "インポートが失敗する可能性があります。有効な Kashu [.sqlite] または [.sql] バックアップ ファイルを選択していることを確認してください。",
   "duplicate-budget-question": "予算が重複していますか?",
   "duplicate-budget": "予算の重複"
 }

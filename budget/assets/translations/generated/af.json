@@ -391,7 +391,7 @@
   "example": "Voorbeeld:",
   "current-account": "Huidige Rekening",
   "none": "Geen",
-  "order-confirmation": "Dankie vir die ondersteuning van Cashew!",
+  "order-confirmation": "Dankie vir die ondersteuning van Kashu!",
   "already-purchased": "Reeds Gekoop",
   "current-plan": "Huidige Plan",
   "lifetime": "Lewenslank",
@@ -479,7 +479,7 @@
   "delete-currency-question": "Verwyder Geldeenheid?",
   "custom-currency": "Pasgemaakte Geldeenheid",
   "select-an-entry-to-set-custom-exchange-rate": "Kies 'n inskrywing om 'n pasgemaakte wisselkoers op te stel. Let wel: Alle wisselkoers berekeninge gebruik USD as 'n verwysing.",
-  "enjoying-cashew-question": "Geniet jy Cashew?",
+  "enjoying-kashu-question": "Geniet jy Kashu?",
   "no-thanks": "Nee Dankie",
   "credit": "Krediet",
   "debit": "Debiet",
@@ -601,7 +601,7 @@
   "loans-details": "Lenings besonderhede",
   "set-details": "Stel besonderhede in",
   "import-warning": "Invoer waarskuwing",
-  "import-warning-description": "Invoer kan misluk! Maak asseblief seker dat jy 'n geldige Cashew [.sqlite] of [.sql] rugsteunlêer gekies het",
+  "import-warning-description": "Invoer kan misluk! Maak asseblief seker dat jy 'n geldige Kashu [.sqlite] of [.sql] rugsteunlêer gekies het",
   "duplicate-budget-question": "Duplikaat begroting?",
   "duplicate-budget": "Duplikaat begroting"
 }

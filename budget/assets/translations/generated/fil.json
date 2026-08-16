@@ -472,7 +472,7 @@
   "error-getting-products": "Error sa pagkuha ng mga produkto",
   "error-getting-products-description": "Mayroong isang error na kumokonekta sa App Store. Subukang muli mamaya.",
   "error-processing-order": "Mayroong isang error na pagproseso ng iyong pagbili. Pakisubukang muli.",
-  "order-confirmation": "Salamat sa pagsuporta sa Cashew!",
+  "order-confirmation": "Salamat sa pagsuporta sa Kashu!",
   "any-previous-purchases-restored": "Ang anumang mga nakaraang pagbili ay naibalik",
   "already-purchased": "Nabili na",
   "current-plan": "Kasalukuyang plano",
@@ -984,7 +984,7 @@
   "delete-currency-question": "Tanggalin ang pera?",
   "custom-currency": "Pasadyang pera",
   "select-an-entry-to-set-custom-exchange-rate": "Pumili ng isang entry upang magtakda ng isang pasadyang rate ng palitan. Tandaan: Ang lahat ng mga kalkulasyon ng rate ng palitan ay gumagamit ng USD bilang isang sanggunian.",
-  "enjoying-cashew-question": "Tinatangkilik ang app?",
+  "enjoying-kashu-question": "Tinatangkilik ang app?",
   "consider-rating": "Isaalang -alang ang pag -iwan ng pagsusuri kung masiyahan ka sa app 😄 salamat!",
   "no-thanks": "Salamat nalang",
   "rate": "Rate!",
@@ -1178,7 +1178,7 @@
   "loans-details": "Mga Detalye ng Pautang",
   "set-details": "Itakda ang Mga Detalye",
   "import-warning": "Babala sa Pag-import",
-  "import-warning-description": "Maaaring mabigo ang pag-import! Pakitiyak na nakapili ka ng wastong Cashew [.sqlite] o [.sql] backup file",
+  "import-warning-description": "Maaaring mabigo ang pag-import! Pakitiyak na nakapili ka ng wastong Kashu [.sqlite] o [.sql] backup file",
   "duplicate-budget-question": "Duplicate na Badyet?",
   "duplicate-budget": "Dobleng Badyet"
 }
