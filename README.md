@@ -1,149 +1,173 @@
-<h1 align="center" style="font-size:28px; line-height:1"><b>Kashu</b></h1>
+# Kashu
 
 <div align="center">
-  <a href="https://github.com/A0D1I2L3/Finbud">
-    <img alt="Icon" src="promotional/icons/icon.png" width="150px" >
-  </a>
+  <img alt="Kashu icon" src="promotional/icons/icon.jpeg" width="150px">
 </div>
 
-<br />
+**Kashu** is a private, local-first money management app for Android and web. Track expenses, plan budgets, set goals, and manage multiple accounts and currencies — all on your own device. No accounts, no cloud, no paywalls.
 
-<div align="center">
-  <a href="https://github.com/A0D1I2L3/Finbud/releases/">
-    <img alt="GitHub Badge" src="promotional/store-banners/github-badge.png" height="60px">
-  </a>
-</div>
+Kashu is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense tracker, rebuilt with a focus on privacy and UPI-centric features for Indian users. Built with **Flutter** and [Drift](https://drift.simonbinder.eu/) (SQLite).
 
 ---
 
-<br />
+## Features
 
-Kashu is a full-fledged, feature-rich application designed to empower users in managing their finances effectively. Built using Flutter with Drift's SQL package. It is a fork of the [Cashew](https://github.com/jameskokoska/Cashew) expense tracker, rebranded and adapted for personal use — fully local, no Firebase, no paywalls.
+### 🧾 Transactions
 
-> **Note:** The app icon and promotional images still use the upstream Cashew assets. Replace them with your own artwork before shipping.
+- Track expenses, income, upcoming payments, subscriptions, repeating transactions, debts (borrowed) and credits (lent).
+- Custom categories with custom icons and default types (expense / income).
+- Auto-assign recurring merchants to categories and custom titles.
+- Full-text search and filters by date, category, amount, or custom tags.
+- Batch operations: long-press to select, swipe to edit or delete multiple entries at once.
+
+### 🎯 Budgets & Goals
+
+- Flexible budgets with custom time periods — monthly, weekly, daily, or your own.
+- Opt-in transactions per budget and per-category spending limits.
+- Review past budget history to spot spending trends.
+- Spending and saving goals with progress tracking.
+
+### 📸 UPI Screenshot Extraction
+
+- Scan a UPI payment screenshot (PhonePe, Google Pay, Paytm, BHIM, and more) from inside the app, or share it straight to Kashu from any UPI app's share sheet.
+- On-device OCR (ML Kit) parses the amount, merchant, date, and transaction type, then pre-fills a new transaction. Screenshots never leave your device.
+- Review mode flags low-confidence parses so you can correct them before saving.
+
+### 💱 Multiple Currencies & Accounts
+
+- Manage finances across currencies with up-to-date conversion rates.
+- Switch accounts and currencies freely — everything is converted automatically.
+- Option to hide currency labels when all accounts share the same currency.
+
+### 🔒 Privacy & Security
+
+- **100% local storage** (SQLite via Drift) — no cloud, no accounts, no Firebase.
+- Optional biometric lock.
+- Full database backup (`.sql` / `.sqlite`) and CSV export; restore after reinstall or when switching devices.
+
+### 🎨 Design & Automation
+
+- Material You design with custom accent color, light/dark mode, and a customizable home screen.
+- Detailed spending graphs.
+- Notifications and reminders for budgets, goals, transactions, and upcoming due dates.
+- CSV and Google Sheets import.
+- App links and home screen widgets.
 
 ---
 
-## Key Features
+## Getting Started
 
-### 💸 Budget Management
+### Prerequisites
 
-- Custom Budgets and Time Periods: Set up personalized budgets with flexible time periods, such as monthly, weekly, daily, or any custom time period that suits your financial planning needs.
-- Added Budgets: Selectively add transactions to specific budgets, allowing you to focus on specific expense categories.
-- Category Spending Limits per Budget: Set limits for each category within a budget, ensuring responsible spending.
-- Past Budget History Viewing: Analyze your spending habits over time by accessing past budget history.
-- Goals: Create spending and saving goals and track your progress towards achieving them.
+- [Flutter](https://docs.flutter.dev/get-started/install) 3.38 or newer
+- Android SDK (API 24+) and an Android device or emulator
 
-### 💰 Transaction Management
+### Run
 
-- Support for Different Transaction Types: Upcoming, subscription, repeating, debts (borrowed), and credit (lent).
-- Custom Categories: Create personalized categories with custom icons, and set the default type (expense or income).
-- Custom Titles: Automatically assign transactions with the same name to specific categories.
-- Search and Filters: Search and filter transactions by date, category, amount, or custom tags.
-- Easy Editing: Long-press and swipe to select multiple budgets, edit, or delete at once.
+```bash
+cd budget
+flutter pub get
+flutter run
+```
 
-### 📸 UPI Payment Extraction
+### Build
 
-- Scan a UPI payment screenshot (PhonePe, GPay, BHIM) from inside the app, or share the screenshot directly to Kashu from any UPI app's share sheet.
-- On-device OCR parses the amount, merchant, date, and transaction type, then pre-fills a new transaction.
+```bash
+cd budget
 
-### 💱 Financial Flexibility
+# Debug APK (for development)
+flutter build apk --debug
 
-- Multiple Currencies and Accounts: Manage finances across different currencies with up-to-date conversion rates.
-- Switch Accounts and Currencies with Ease: Everything is converted automatically in an instant.
+# Release APK
+flutter build apk --release
 
-### 🔒 Enhanced Security and Accessibility
+# Release app bundle
+flutter build appbundle --release
+```
 
-- Biometric Lock: Secure budget data using biometric authentication.
+Release builds are signed with your own keystore — `budget/android/build.gradle` reads `budget/android/key.properties` if present (with `keyAlias`, `keyPassword`, `storeFile`, `storePassword`). Without it, Gradle falls back to debug signing.
 
-### 🎨 User Experience and Design
+---
 
-- Material You Design
-- Custom Accent Color
-- Light and Dark Mode
-- Customizable Home Screen
-- Detailed Graph Visuals
+## Platform Support
 
-### 💿 Smart Automation
+| Platform | Status           |
+| -------- | ---------------- |
+| Android  | ✅ Supported     |
+| Web      | ✅ Supported     |
+| iOS      | ❌ Removed       |
 
-- Notifications: Reminders for budget goals, transactions, and upcoming due dates.
-- Import CSV Files
-- Import Google Sheets
-- App Links / Home Screen Widgets
-
-### 💾 Local-Only Storage & Backup
-
-- All data is stored locally (SQLite via Drift) — no cloud, no accounts.
-- Export a full database backup (`.sql` / `.sqlite`) or CSV, and import it later to restore after an uninstall/reinstall or device change.
+---
 
 ## Developer Notes
 
-### Android Release
+### Project structure
 
-- To build an APK: `flutter build apk --release`
-- To build an app-bundle: `flutter build appbundle --release`
+- `budget/` — the Flutter application.
+- `budget/lib/database/` — Drift schema, tables, and migrations.
+- `budget/lib/pages/` — UI screens.
+- `budget/lib/struct/` — core logic, including the UPI OCR pipeline (`upiOcr.dart`, `upiParser.dart`, `upiScreenshotScanner.dart`).
+- `budget/packages/` — bundled, modified forks of discontinued packages.
+- `promotional/` — marketing and store assets.
 
-Note: required Android SDK.
+### Migrate the database
 
-### GitHub release
+1. Make schema or table changes.
+2. Bump the schema version: `int schemaVersionGlobal = ... + 1` in `lib/database/tables.dart`.
+3. From `budget/`, generate the code: `dart run build_runner build`.
+4. Export the new schema (replace `[schemaVersion]`):
+   `dart run drift_dev schema dump lib/database/tables.dart drift_schemas/drift_schema_v[schemaVersion].json`
+   See [Drift migrations](https://drift.simonbinder.eu/docs/advanced-features/migrations/#exporting-the-schema).
+5. Generate step-by-step migrations: `dart run drift_dev schema steps drift_schemas/ lib/database/schema_versions.dart`.
+6. Add the migration strategy for the new version in the `stepByStep(...)` function in `tables.dart`.
 
-- Create a tag for the current version specified in `pubspec.yaml`
-- `git tag <version>`
-- Push the tag
-- `git push origin <version>`
-- Create the release and upload binaries
-- https://github.com/A0D1I2L3/Finbud/releases/new
+### Bundled packages
 
-### Bundled Packages
+This repository bundles modified versions of discontinued packages in `budget/packages`:
 
-This repository contains, bundled in, modified versions of the discontinued packages listed below. They can be found in the folder `/budget/packages`
+- [implicitly_animated_reorderable_list](https://pub.dev/packages/implicitly_animated_reorderable_list)
+- [sliding_sheet](https://pub.dev/packages/sliding_sheet)
 
-- https://pub.dev/packages/implicitly_animated_reorderable_list
-- https://pub.dev/packages/sliding_sheet
+### Code conventions
 
-### Develop Wirelessly on Android
+- **Platform detection:** always use `getPlatform()` from `lib/functions.dart` — `Platform` is not available on web.
+- **Navigation:** use `pushRoute(context, page)` from `lib/functions.dart` — it handles platform routing and `PageRouteBuilder`.
+- **Naming:** "Wallets" are called "Accounts" in the UI but the internal name `Wallet` is still used. Likewise "Objectives" are "Goals" in the UI but the internal name `Objectives` is still used.
 
-- `adb tcpip 5555`
-- `adb connect <IP>`
-- Get the phone's IP by going to `About Phone` > `Status Information` > `IP Address`
+### Develop wirelessly on Android
 
-### Migrate Database
+```bash
+adb tcpip 5555
+adb connect <IP>
+```
 
-1. Make any database changes to the schema and tables
-2. Bump the schema version
-   - Change `int schemaVersionGlobal = ...+1` in `tables.dart`
-3. Make sure you are in application root directory
-   - `cd ./budget/`
-4. Generate database code
-   - Run `dart run build_runner build`
-5. Export the new schema
-   - Generate schema dump for the newly created schema
-   - Replace `[schemaVersion]` in the command below with the value of `schemaVersionGlobal`
-   - Run `dart run drift_dev schema dump lib/database/tables.dart drift_schemas//drift_schema_v[schemaVersion].json`
-   - Read more: https://drift.simonbinder.eu/docs/advanced-features/migrations/#exporting-the-schema
-6. Generate step-by-step migrations
-   - Run `dart run drift_dev schema steps drift_schemas/ lib/database/schema_versions.dart`
-7. Implement migration strategy
-   - Edit `await stepByStep(...)` function in `tables.dart` and add the migration strategy for the new version migration
+Find the phone's IP at `About Phone` → `Status Information` → `IP Address`.
 
-### Get Platform
+### Publish a release
 
-- Use `getPlatform()` from `functions.dart`
-- Since `Platform` is not supported on web, we must create a wrapper and always use this to determine the current platform
+1. Bump the version in `budget/pubspec.yaml`.
+2. Tag and push:
+   ```bash
+   git tag <version>
+   git push origin <version>
+   ```
+3. Create the release and upload the binaries at https://github.com/A0D1I2L3/Finbud/releases/new.
 
-### Push Route
+---
 
-- If we want to navigate to a new page, stick to `pushRoute(context, page)` function from `functions.dart`
-- It handles the platform routing and `PageRouteBuilder`
+## Translations
 
-### Wallets vs. Accounts
+App strings live in `lib/struct/languageMap.dart`. Update translations with:
 
-- `Wallets` have been renamed to `Accounts` on the front-end but internally, the name `Wallet` is still used.
+```bash
+cd budget
+dart run flutter_localizations:generate --output-dir=... # see scripts/
+```
 
-### Objectives vs. Goals
+Windows helpers are in `scripts/` (`update_translations.bat`, etc.).
 
-- `Objectives` have been renamed to `Goals` on the front-end but internally, the name `Objectives` is still used.
+---
 
 ## License
 
-GNU GPL v3.0. This project is a fork of [Cashew](https://github.com/jameskokoska/Cashew) by James Kokoska. See [LICENSE](LICENSE).
+GNU GPL v3.0. Kashu is a fork of [Cashew](https://github.com/jameskokoska/Cashew) by James Kokoska. See [LICENSE](LICENSE).
