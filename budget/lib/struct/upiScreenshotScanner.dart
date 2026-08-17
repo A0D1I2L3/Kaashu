@@ -64,7 +64,11 @@ Future<void> scanUpiScreenshot(BuildContext context,
   // few seconds and is otherwise invisible on screen).
   loadingIndeterminateKey.currentState?.setVisibility(true);
   openLoadingPopup(context);
+  // Yield to the rendering pipeline so the spinner is actually painted before
+  // heavy synchronous image work on the main isolate blocks the thread.
+  await Future.delayed(Duration.zero);
 
+  final scanSw = Stopwatch()..start();
   try {
     final UpiOcrResult ocrResult = await recognizeTextInImage(path);
     final String ocrText = ocrResult.rawText;
@@ -84,6 +88,7 @@ Future<void> scanUpiScreenshot(BuildContext context,
     error = "upi-scan-failed-description".tr();
     print("Error scanning UPI screenshot: " + e.toString());
   } finally {
+    print("[UpiScan] Full pipeline: ${scanSw.elapsedMilliseconds}ms");
     loadingIndeterminateKey.currentState?.setVisibility(false);
   }
 

@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:mobile_ocr/mobile_ocr.dart';
@@ -458,40 +460,132 @@ Future<void> _initUpiOcrModels() async {
   await MobileOcr().prepareModels();
 }
 
+/// Result returned by the background isolate: validation + preprocessing.
+class _PreprocessResult {
+  const _PreprocessResult({
+    required this.isValid,
+    this.errorKey,
+    this.preprocessedBytes,
+    this.scale = 1,
+    this.adjustments = const [],
+  });
+
+  final bool isValid;
+  final String? errorKey;
+  final Uint8List? preprocessedBytes;
+  final double scale;
+  final List<String> adjustments;
+}
+
+/// Heavy image work that runs in a background isolate via [compute].
+///
+/// Decodes, validates, resizes, converts to grayscale, and optionally applies
+/// contrast stretch. Returns the processed PNG bytes (or null on error).
+_PreprocessResult _validateAndPreprocessInIsolate(List<dynamic> args) {
+  final Uint8List imageBytes = args[0];
+  final double targetSide = args[1];
+
+  try {
+    if (imageBytes.isEmpty) {
+      return const _PreprocessResult(isValid: false, errorKey: "upi-image-invalid");
+    }
+
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) {
+      return const _PreprocessResult(isValid: false, errorKey: "upi-image-invalid");
+    }
+    final minSide = math.min(decoded.width, decoded.height);
+    if (minSide < 100 || math.max(decoded.width, decoded.height) > 8192) {
+      return const _PreprocessResult(isValid: false, errorKey: "upi-image-invalid");
+    }
+
+    img.Image image = img.bakeOrientation(decoded);
+    final adjustments = <String>[];
+
+    final longestSide = math.max(image.width, image.height).toDouble();
+    double scale = 1;
+    if ((longestSide - targetSide).abs() > 0.5) {
+      scale = targetSide / longestSide;
+      final newWidth = math.max(1, (image.width * scale).round());
+      final newHeight = math.max(1, (image.height * scale).round());
+      image = img.copyResize(
+        image,
+        width: newWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.cubic,
+      );
+      adjustments.add("scale ${scale.toStringAsFixed(2)}x");
+    }
+
+    image = img.grayscale(image);
+    adjustments.add("grayscale");
+
+    // Quick luminance stats on a downsampled copy.
+    final sampleSize = 64;
+    final sampled = img.copyResize(
+      image,
+      width: sampleSize,
+      height: sampleSize,
+      interpolation: img.Interpolation.average,
+    );
+    int sum = 0;
+    int sumSquares = 0;
+    final pixelCount = sampled.width * sampled.height;
+    for (var y = 0; y < sampled.height; y++) {
+      for (var x = 0; x < sampled.width; x++) {
+        final luma = sampled.getPixel(x, y).r.toInt();
+        sum += luma;
+        sumSquares += luma * luma;
+      }
+    }
+    final mean = sum / pixelCount;
+    final variance = (sumSquares / pixelCount) - (mean * mean);
+    final stdDev = math.sqrt(math.max(0, variance));
+
+    if (mean < 70 || stdDev < 30) {
+      image = img.normalize(image, min: 0, max: 255);
+      adjustments.add("contrast-stretch");
+    }
+
+    final pngBytes = Uint8List.fromList(img.encodePng(image));
+    return _PreprocessResult(
+      isValid: true,
+      preprocessedBytes: pngBytes,
+      scale: scale,
+      adjustments: adjustments,
+    );
+  } catch (_) {
+    return const _PreprocessResult(isValid: false, errorKey: "upi-image-invalid");
+  }
+}
+
 /// Runs the full OCR pipeline on a screenshot:
 ///
-/// validate → preprocess → PP-OCR v5 (mobile_ocr) → structured result.
+/// PP-OCR v5 (mobile_ocr) → structured result.
+///
+/// Dart-side preprocessing is intentionally skipped — the native plugin uses
+/// Android's hardware-accelerated BitmapFactory with inSampleSize downsampling,
+/// which is faster than Dart's `image` package decode + resize + PNG encode.
+/// This eliminates a redundant decode/encode cycle (~1-2 s savings).
 Future<UpiOcrResult> recognizeUpiScreenshot(String imagePath) async {
-  final validation = await validateUpiImage(imagePath);
-  if (!validation.isValid) {
-    throw UpiOcrException(validation.errorKey ?? "upi-image-invalid");
-  }
-
-  UpiImagePreprocessResult preprocess;
-  try {
-    preprocess = await preprocessUpiImage(imagePath);
-  } catch (e) {
-    if (e is UpiOcrException) rethrow;
-    // If preprocessing fails, still attempt OCR on the original image.
-    preprocess = UpiImagePreprocessResult(
-      path: imagePath,
-      scale: 1,
-      adjustments: const ["preprocess-skipped"],
-    );
-  }
+  final sw = Stopwatch()..start();
 
   try {
     await ensureUpiOcrModels();
+    print("[UpiScan] ensureUpiOcrModels: ${sw.elapsedMilliseconds}ms");
+    final modelReady = sw.elapsedMilliseconds;
+
     final result = await MobileOcr().detectText(
-      imagePath: preprocess.path,
+      imagePath: imagePath,
       includeAllConfidenceScores: true,
     );
+    print("[UpiScan] detectText: ${sw.elapsedMilliseconds - modelReady}ms "
+        "(total ${sw.elapsedMilliseconds}ms)");
+    sw.stop();
+
     return mapTextDetectionResult(
       result.blocks,
       sourcePath: imagePath,
-      preprocessedPath: preprocess.path == imagePath ? null : preprocess.path,
-      adjustments: preprocess.adjustments,
-      scaleApplied: preprocess.scale,
     );
   } on PlatformException catch (e) {
     throw UpiOcrException("upi-ocr-error", e);

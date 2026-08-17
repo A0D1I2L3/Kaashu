@@ -6,6 +6,7 @@ import 'package:budget/struct/logging.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
+import 'package:budget/struct/upiOcr.dart';
 import 'package:budget/struct/upiScreenshotScanner.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
@@ -60,6 +61,8 @@ void main() async {
         ),
       ),
     );
+    // Pre-warm ONNX models in background so the first OCR call is fast.
+    ensureUpiOcrModels();
   });
 }
 
